@@ -30,6 +30,8 @@ Những gì đã trao đổi và lý do các quyết định: @docs/tom_tat_trao
 - Không thêm tính năng ngoài đề xuất; cần thì đề xuất và chờ đồng ý.
 
 ## Git
+- Đầu phiên: `git checkout main && git pull` trước khi đọc code; code trên GitHub có thể mới hơn bản trên máy.
+- Không cho hai phiên cùng làm trong một thư mục; cần làm song song thì mỗi phiên một worktree riêng.
 - Mỗi phần việc một nhánh (`feat/...`, `fix/...`, `docs/...`, `chore/...`) và **một PR riêng** vào `main`.
 - Làm tới đâu commit tới đó. **Không xóa nhánh** sau khi merge (đồ án cần giữ lịch sử).
 - **Không thêm dòng `Co-Authored-By: Claude`** hay "Generated with Claude Code" vào commit hoặc PR.
