@@ -185,6 +185,11 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 .status > * { min-width: 0; }
 .issues { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .issues li { padding-left: 16px; border-left: 3px solid var(--warn); font-size: 0.92rem; }
+.issues li.ok { border-left-color: var(--ok); }
+.issues li.todo { border-left-color: var(--line-strong); }
+.status-col { display: flex; flex-direction: column; gap: 12px; }
+.status-col h3:not(:first-child) { margin-top: 10px; }
+.timeline li.done .d::after { content: " ✓"; color: var(--ok); }
 .timeline { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
 .timeline li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 .timeline li:last-child { border-bottom: 0; }
@@ -206,7 +211,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="meta">
     <span>Nguồn: docs/de_xuat_trien_khai_DATN_nhom17_12.md</span>
     <span>Sơ đồ mạch: hardware/PCB_Layout (rev 1.0)</span>
-    <span>Cập nhật 01/11/2026</span>
+    <span>Hiện trạng tính tới commit db2c903, 01/11/2026</span>
   </div>
 </header>
 
@@ -460,17 +465,30 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
     <h2>Repo đang ở đâu</h2>
   </div>
   <div class="status">
-    <div>
+    <div class="status-col">
+      <h3>Đã xong</h3>
       <ul class="issues">
-        <li>Mười module trong <code>pi/safecam/</code> mới là file trống có dòng TODO. Chưa có test nào.</li>
-        <li><code>config/</code>, <code>esp32/</code>, <code>ml/</code>, <code>tools/</code>, <code>deploy/</code> mới có README, chưa có file thật.</li>
+        <li class="ok"><code>camera.py</code>: luồng đọc riêng, chỉ giải nén khi YOLO cần, số thứ tự khung, tự mở lại sau 30 lần lỗi.</li>
+        <li class="ok"><code>detector.py</code>: YOLO11n NCNN 320 px, chỉ lớp người, có tâm ngang <code>cx</code> để chia khu.</li>
+        <li class="ok"><code>config.py</code>, <code>camera.yaml</code>, <code>detection.yaml</code>; hướng dẫn cài trên Pi (torch bản CPU).</li>
+        <li class="ok">Đo 45 phút trên Pi 4 (<code>bench_pi.py</code>, <code>bench_report.py</code>): <b>7,47 FPS</b> trung bình, phân vị 5% là 7,45; YOLO 99 ms; CPU 74%; cao nhất 51,1 °C; không hạ xung.</li>
+      </ul>
+      <h3>Còn thiếu cho mốc 10/11</h3>
+      <ul class="issues">
+        <li class="todo">Phía Pi: <code>zones.py</code>, <code>intrusion.py</code>, <code>outputs.py</code>, <code>persistence.py</code>, <code>mqtt_client.py</code>, <code>main.py</code>; <code>zones.yaml</code>, <code>mqtt.yaml</code>. Chưa có test nào trong <code>pi/tests/</code>.</li>
+        <li class="todo">Phần của Thăng: firmware <code>esp32/</code>, cấu hình Mosquitto và systemd trong <code>deploy/</code>, <code>observation.py</code>.</li>
+        <li class="todo">Cho mốc 17/11: <code>ml/</code>, <code>collect_data.py</code>, <code>calibrate_zones.py</code>.</li>
+      </ul>
+      <h3>Cần sửa hoặc chốt</h3>
+      <ul class="issues">
+        <li><code>open_camera()</code> chưa áp <code>power_line_frequency</code> (50 Hz) có trong <code>camera.yaml</code>.</li>
         <li>README của <code>pi/</code> và <code>pi/tests/</code> trỏ tới số mục của bản đề xuất cũ. Ở bản 12, MQTT là mục 6 và K1–K13 nằm ở mục 7.</li>
         <li>Màu LED và vai trò các nút NEXT, TEST cần thống nhất giữa đề xuất và mạch.</li>
       </ul>
     </div>
     <ol class="timeline">
-      <li class="next"><span class="d">03/11</span><span>YOLO11n NCNN chạy trên Pi, có số đo FPS; broker chạy</span></li>
-      <li><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK</span></li>
+      <li class="done"><span class="d">03/11</span><span>YOLO11n NCNN chạy trên Pi, có số đo FPS (xong 31/10); broker chưa có cấu hình trong repo</span></li>
+      <li class="next"><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK</span></li>
       <li><span class="d">17/11</span><span>Dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy</span></li>
       <li><span class="d">24/11</span><span>Kiểm thử K1–K13, đo độ trễ, chạy nền 24 giờ</span></li>
       <li><span class="d">01/12</span><span>Hoàn thiện báo cáo, slide, video demo</span></li>
