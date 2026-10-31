@@ -1,0 +1,32 @@
+# Dữ liệu và kết quả: không đưa lên git (dữ liệu cá nhân, dung lượng lớn)
+data/
+*.mp4
+*.avi
+*.jpg
+*.png
+!docs/**/*.png
+*.pt
+*.onnx
+*_ncnn_model/
+runs/
+logs/
+*.log
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# ESP32 / PlatformIO
+esp32/.pio/
+esp32/include/secrets.h
+
+# Bí mật và máy cá nhân
+.env
+deploy/mosquitto/passwd
+CLAUDE.local.md
+.vscode/
+.idea/
