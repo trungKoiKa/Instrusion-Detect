@@ -1,0 +1,6 @@
+opencv-python
+ultralytics
+ncnn
+paho-mqtt
+pyyaml
+pytest
