@@ -1,0 +1,3 @@
+model: yolo11n_ncnn_model   # thư mục mô hình NCNN
+imgsz: 320                  # cỡ ảnh đưa vào YOLO
+conf: 0.25                  # ngưỡng tin cậy tạm thời

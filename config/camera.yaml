@@ -1,0 +1,7 @@
+# Camera C270, dùng chung cho mọi chương trình
+device: /dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_288F8990-video-index0
+fourcc: MJPG
+width: 640
+height: 480
+fps: 30
+power_line_frequency: 1   # 1 = 50 Hz
