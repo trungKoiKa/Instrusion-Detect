@@ -2,6 +2,17 @@
 
 Chạy: `python -m safecam.main` (từ thư mục `pi/`). Test: `pytest tests/` (chạy được trên laptop, không cần phần cứng).
 
+## Cài trên Pi
+
+```
+mkdir -p ~/tmp && export TMPDIR=~/tmp   # /tmp nằm trong RAM (~2 GB), không đủ cho pip
+python3 -m venv .venv && source .venv/bin/activate
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install -r pi/requirements.txt
+```
+
+Phải cài torch bản CPU trước: bản mặc định trên PyPI kéo theo vài GB thư viện CUDA vô dụng trên Pi và làm đầy thẻ 32 GB.
+
 | Module | Việc | Mục đề xuất |
 | --- | --- | --- |
 | `camera.py` | Luồng đọc C270, giữ khung mới nhất, mã khung, tự mở lại | 3 |
