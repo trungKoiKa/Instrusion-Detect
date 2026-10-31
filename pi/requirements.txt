@@ -1,0 +1,7 @@
+# Trên Pi: cài torch bản CPU trước (xem pi/README.md), nếu không pip kéo thêm vài GB thư viện CUDA.
+opencv-python
+ultralytics
+ncnn
+paho-mqtt
+pyyaml
+pytest
