@@ -1,0 +1,482 @@
+<title>Kiến trúc SafeCam</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: bản vẽ kỹ thuật một cột, sơ đồ khối toàn hệ thống ở đầu, chi tiết từng lớp bên dưới */
+:root {
+  --paper: #eef1f4;
+  --sheet: #f9fbfc;
+  --ink: #17222e;
+  --muted: #586776;
+  --line: #cbd3db;
+  --line-strong: #8d9aa7;
+  --accent: #2b5b8a;
+  --accent-soft: #e1eaf3;
+  --alarm: #c4372c;
+  --warn: #c07f0c;
+  --orange: #d9661c;
+  --ok: #2e7c55;
+  --yellow: #d6b10f;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f151b; --sheet: #161f28; --ink: #e2e8ee; --muted: #93a2b0;
+    --line: #2b3845; --line-strong: #566676; --accent: #78a9db; --accent-soft: #1c2b3a;
+    --alarm: #ee6b60; --warn: #e3a93c; --orange: #f08a45; --ok: #5cbb8b; --yellow: #e8cc3a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f151b; --sheet: #161f28; --ink: #e2e8ee; --muted: #93a2b0;
+  --line: #2b3845; --line-strong: #566676; --accent: #78a9db; --accent-soft: #1c2b3a;
+  --alarm: #ee6b60; --warn: #e3a93c; --orange: #f08a45; --ok: #5cbb8b; --yellow: #e8cc3a;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 1.7rem; font-weight: 600; }
+h3 { font-size: 1.2rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+section { display: flex; flex-direction: column; gap: 18px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 18px; }
+
+.figure {
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.figure svg { display: block; width: 100%; min-width: 900px; height: auto; }
+.caption { font-size: 0.85rem; color: var(--muted); }
+
+/* SVG */
+.s-frame { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 6 4; }
+.s-dev { fill: var(--sheet); stroke: var(--line-strong); stroke-width: 1.3; }
+.s-mod { fill: var(--sheet); stroke: var(--accent); stroke-width: 1.3; }
+.s-mod-obs { fill: var(--sheet); stroke: var(--warn); stroke-width: 1.6; }
+.s-mod-int { fill: var(--sheet); stroke: var(--alarm); stroke-width: 1.6; }
+.s-broker { fill: var(--accent); stroke: var(--accent); }
+.s-wire { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.s-wifi { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 5 4; }
+.s-ah { fill: var(--line-strong); }
+.s-ah-acc { fill: var(--accent); }
+.t-title { font-family: var(--font-display); font-weight: 600; font-size: 18px; fill: var(--ink); }
+.t-file { font-family: var(--font-mono); font-weight: 500; font-size: 13px; fill: var(--ink); }
+.t-sub { font-family: var(--font-body); font-size: 11.5px; fill: var(--muted); }
+.t-note { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.t-wifi { font-family: var(--font-mono); font-size: 11px; fill: var(--accent); }
+.t-onacc { font-family: var(--font-mono); font-weight: 500; font-size: 13px; fill: var(--sheet); }
+.t-onacc-sub { font-family: var(--font-body); font-size: 11.5px; fill: var(--sheet); }
+.t-dot-alarm { fill: var(--alarm); } .t-dot-ok { fill: var(--ok); } .t-dot-yel { fill: var(--yellow); }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 22px; height: 12px; border-radius: 2px; border: 1.6px solid; background: var(--sheet); }
+
+/* Máy trạng thái */
+.machines { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.machine {
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--c);
+  border-radius: 4px;
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.machine.int { --c: var(--alarm); }
+.machine.obs { --c: var(--warn); }
+.machine-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.machine-head .mono { color: var(--muted); }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.st {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.st.hot { border-color: var(--c); color: var(--c); }
+.tr {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; color: var(--muted);
+}
+.tr::after { content: "→"; font-size: 1.1rem; color: var(--ink); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.rule { border-top: 2px solid var(--ink); padding-top: 10px; font-size: 0.92rem; display: flex; flex-direction: column; gap: 4px; }
+.rule b { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; }
+
+/* Bảng */
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.two { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+
+.lamp { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.red { background: var(--alarm); }
+.dot.orange { background: var(--orange); }
+.dot.yellow { background: var(--yellow); }
+.dot.blink { animation: blink 0.8s steps(2, jump-none) infinite; }
+.dot.alt { animation: alt 0.8s steps(2, jump-none) infinite; }
+@keyframes blink { from { opacity: 1; } to { opacity: 0.15; } }
+@keyframes alt { from { background: var(--orange); } to { background: var(--alarm); } }
+@media (prefers-reduced-motion: reduce) { .dot.blink, .dot.alt { animation: none; } }
+.flag {
+  font-family: var(--font-mono); font-size: 0.7rem; padding: 1px 6px; border-radius: 2px;
+  border: 1px solid var(--warn); color: var(--warn); white-space: nowrap;
+}
+
+/* Phần ngoài vòng chạy */
+.offline { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.off {
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 4px;
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;
+}
+.off .path { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); font-weight: 500; }
+.off .out { margin-top: auto; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 0.82rem; color: var(--muted); }
+
+/* Hiện trạng */
+.status { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.status > * { min-width: 0; }
+.issues { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.issues li { padding-left: 16px; border-left: 3px solid var(--warn); font-size: 0.92rem; }
+.timeline { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.timeline li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.timeline li:last-child { border-bottom: 0; }
+.timeline .d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 500; }
+.timeline li.next .d::after { content: " ●"; color: var(--alarm); }
+
+@media (min-width: 820px) {
+  .two { grid-template-columns: 1fr 1fr; }
+  .status { grid-template-columns: 1.2fr 1fr; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">ĐATN Nhóm 17 · Kiến trúc hệ thống</span>
+  <h1>SafeCam: phát hiện người xâm nhập khu cấm</h1>
+  <p class="lede">Camera C270 quay khu vực, Raspberry Pi 4 chạy YOLO11n để tìm người trong 4 khu dọc, rồi gửi cảnh báo qua MQTT tới trạm ESP32 có đèn, còi và nút xác nhận. Toàn bộ chạy trong mạng WiFi nội bộ, không cần Internet.</p>
+  <div class="meta">
+    <span>Nguồn: docs/de_xuat_trien_khai_DATN_nhom17_12.md</span>
+    <span>Sơ đồ mạch: hardware/PCB_Layout (rev 1.0)</span>
+    <span>Cập nhật 01/11/2026</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Hình 1</span>
+    <h2>Sơ đồ khối toàn hệ thống</h2>
+  </div>
+  <div class="figure">
+    <svg viewBox="0 0 1240 415" role="img" aria-label="Sơ đồ khối: camera C270 nối USB vào Raspberry Pi 4; trong Pi có các module camera, detector, zones, intrusion, observation, outputs, persistence, mqtt_client, stream và broker Mosquitto; broker nối WiFi tới ESP32.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-ah"/></marker>
+        <marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-ah-acc"/></marker>
+      </defs>
+
+      <!-- Raspberry Pi -->
+      <rect class="s-frame" x="185" y="40" width="770" height="355" rx="6"/>
+      <text class="t-title" x="205" y="72">Raspberry Pi 4</text>
+      <text class="t-note" x="935" y="70" text-anchor="end">main.py ghép các module · vòng suy luận</text>
+      <text class="t-note" x="205" y="384">deploy: safecam.service (systemd, Type=notify, WatchdogSec)</text>
+
+      <!-- Hàng 1 -->
+      <rect class="s-mod" x="205" y="95" width="130" height="56" rx="3"/>
+      <text class="t-file" x="270" y="118" text-anchor="middle">camera.py</text>
+      <text class="t-sub" x="270" y="137" text-anchor="middle">giữ khung mới nhất</text>
+
+      <rect class="s-mod" x="355" y="95" width="130" height="56" rx="3"/>
+      <text class="t-file" x="420" y="118" text-anchor="middle">detector.py</text>
+      <text class="t-sub" x="420" y="137" text-anchor="middle">YOLO11n NCNN 320</text>
+
+      <rect class="s-mod" x="505" y="95" width="130" height="56" rx="3"/>
+      <text class="t-file" x="570" y="118" text-anchor="middle">zones.py</text>
+      <text class="t-sub" x="570" y="137" text-anchor="middle">4 khu, cửa sổ T</text>
+
+      <rect class="s-mod-int" x="655" y="95" width="130" height="56" rx="3"/>
+      <text class="t-file" x="720" y="118" text-anchor="middle">intrusion.py</text>
+      <text class="t-sub" x="720" y="137" text-anchor="middle">trục xâm nhập</text>
+
+      <!-- Hàng 2 -->
+      <rect class="s-mod-obs" x="505" y="200" width="130" height="56" rx="3"/>
+      <text class="t-file" x="570" y="223" text-anchor="middle">observation.py</text>
+      <text class="t-sub" x="570" y="242" text-anchor="middle">trục quan sát</text>
+
+      <rect class="s-mod" x="655" y="200" width="130" height="56" rx="3"/>
+      <text class="t-file" x="720" y="223" text-anchor="middle">outputs.py</text>
+      <text class="t-sub" x="720" y="242" text-anchor="middle">bảng ưu tiên đèn/còi</text>
+
+      <rect class="s-mod" x="805" y="200" width="130" height="56" rx="3"/>
+      <text class="t-file" x="870" y="223" text-anchor="middle">mqtt_client.py</text>
+      <text class="t-sub" x="870" y="242" text-anchor="middle">publish, nhận ACK</text>
+
+      <!-- Hàng 3 -->
+      <rect class="s-mod" x="205" y="305" width="130" height="56" rx="3"/>
+      <text class="t-file" x="270" y="328" text-anchor="middle">stream.py</text>
+      <text class="t-sub" x="270" y="347" text-anchor="middle">luồng hình demo</text>
+
+      <rect class="s-mod" x="655" y="305" width="130" height="56" rx="3"/>
+      <text class="t-file" x="720" y="328" text-anchor="middle">persistence.py</text>
+      <text class="t-sub" x="720" y="347" text-anchor="middle">file trạng thái, seq</text>
+
+      <rect class="s-broker" x="805" y="305" width="130" height="56" rx="3"/>
+      <text class="t-onacc" x="870" y="328" text-anchor="middle">Mosquitto</text>
+      <text class="t-onacc-sub" x="870" y="347" text-anchor="middle">broker, cổng 1883</text>
+
+      <!-- Thiết bị ngoài -->
+      <rect class="s-dev" x="20" y="88" width="132" height="70" rx="3"/>
+      <text class="t-title" x="86" y="112" text-anchor="middle">Logitech C270</text>
+      <text class="t-sub" x="86" y="131" text-anchor="middle">MJPG 640×480</text>
+      <text class="t-sub" x="86" y="147" text-anchor="middle">30 fps · 50 Hz</text>
+
+      <rect class="s-dev" x="20" y="298" width="132" height="70" rx="3"/>
+      <text class="t-title" x="86" y="322" text-anchor="middle">Laptop</text>
+      <text class="t-sub" x="86" y="341" text-anchor="middle">trình duyệt xem hình</text>
+      <text class="t-sub" x="86" y="357" text-anchor="middle">MQTTX theo dõi</text>
+
+      <rect class="s-dev" x="1050" y="140" width="182" height="250" rx="3"/>
+      <text class="t-title" x="1064" y="167">ESP32-WROOM-32D</text>
+      <text class="t-sub" x="1064" y="186">Trạm cảnh báo ở bàn trực</text>
+      <circle class="t-dot-alarm" cx="1069" cy="214" r="5"/>
+      <circle class="t-dot-ok" cx="1083" cy="214" r="5"/>
+      <circle class="t-dot-yel" cx="1097" cy="214" r="5"/>
+      <text class="t-sub" x="1110" y="218">LED đỏ, xanh, vàng</text>
+      <text class="t-sub" x="1064" y="242">Còi qua transistor Q1</text>
+      <text class="t-sub" x="1064" y="264">Màn OLED I2C</text>
+      <text class="t-sub" x="1064" y="286">Nút ACK, MUTE,</text>
+      <text class="t-sub" x="1064" y="302">NEXT, TEST</text>
+      <text class="t-note" x="1064" y="352">mất 3 nhịp hb</text>
+      <text class="t-note" x="1064" y="368">→ báo mất giám sát</text>
+
+      <!-- Dây nối trong Pi -->
+      <path class="s-wire" d="M152 123H203" marker-end="url(#ah)"/>
+      <text class="t-note" x="170" y="116" text-anchor="middle">USB</text>
+      <path class="s-wire" d="M335 123H353" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M485 123H503" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M635 123H653" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M250 151V240H503" marker-end="url(#ah)"/>
+      <text class="t-note" x="380" y="235">khung hình</text>
+      <path class="s-wire" d="M420 151V214H503" marker-end="url(#ah)"/>
+      <text class="t-note" x="430" y="183">kết quả YOLO</text>
+      <path class="s-wire" d="M720 151V198" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M635 228H653" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M785 228H803" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M720 258V303" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M870 258V303" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M225 151V303" marker-end="url(#ah)"/>
+      <path class="s-wire" d="M205 333H154" marker-end="url(#ah)"/>
+
+      <!-- WiFi nội bộ -->
+      <text class="t-wifi" x="1002" y="286" text-anchor="middle">WiFi nội bộ</text>
+      <path class="s-wifi" d="M935 322H1048" marker-end="url(#ah-acc)"/>
+      <text class="t-wifi" x="992" y="314" text-anchor="middle">event·state·hb</text>
+      <path class="s-wifi" d="M1050 346H937" marker-end="url(#ah-acc)"/>
+      <text class="t-wifi" x="992" y="364" text-anchor="middle">ack</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="border-color: var(--accent)"></i>Module Python trên Pi</span>
+    <span><i class="sw" style="border-color: var(--alarm)"></i>Trục xâm nhập</span>
+    <span><i class="sw" style="border-color: var(--warn)"></i>Trục quan sát camera</span>
+    <span><i class="sw" style="border-color: var(--line-strong)"></i>Thiết bị ngoài Pi</span>
+  </div>
+  <p class="caption">Pi là nơi duy nhất giữ trạng thái; ESP32 chỉ làm theo bản tin <code>state</code>. Broker đặt ngay trên Pi nên mất Internet vẫn báo động được. Hệ thống chỉ ngừng cảnh báo khi router mất điện.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Hình 2</span>
+    <h2>Hai trục trạng thái độc lập</h2>
+    <p class="caption">Tách riêng để sự cố camera không xóa mất sự kiện xâm nhập đang mở, và ngược lại.</p>
+  </div>
+  <div class="machines">
+    <div class="machine int">
+      <div class="machine-head"><h3>Trục xâm nhập</h3><span class="mono">intrusion.py</span></div>
+      <div class="chain">
+        <span class="st">KHÔNG CÓ</span>
+        <span class="tr">thấy người trong khu cấm</span>
+        <span class="st">NGHI NGỜ</span>
+        <span class="tr">≥ K_min lần và tỷ lệ ≥ p trong T giây</span>
+        <span class="st hot">CẢNH BÁO</span>
+        <span class="tr">người trực bấm ACK</span>
+        <span class="st">ĐÃ XÁC NHẬN</span>
+        <span class="tr">khu cấm vắng liên tục đủ T giây</span>
+        <span class="st">KẾT THÚC</span>
+      </div>
+      <p class="caption">Cảnh báo không tự tắt khi người rời đi. Nếu cửa sổ T có quá ít khung được xử lý (Pi chạy chậm), Pi báo lỗi quan sát chứ không im lặng.</p>
+    </div>
+    <div class="machine obs">
+      <div class="machine-head"><h3>Trục quan sát camera</h3><span class="mono">observation.py</span></div>
+      <div class="chain">
+        <span class="st">TỐT</span>
+        <span class="tr">mất hình, treo hoặc bị che</span>
+        <span class="st">NGHI LỖI</span>
+        <span class="tr">kéo dài 3–5 s, hoặc che ngắn lặp lại trong 30–60 s</span>
+        <span class="st hot">MẤT QUAN SÁT</span>
+        <span class="tr">người trực bấm ACK</span>
+        <span class="st">ĐÃ XÁC NHẬN</span>
+      </div>
+    </div>
+  </div>
+  <div class="rules">
+    <div class="rule"><b>Không nhìn được thì không phải “vắng”</b>Che camera không làm một cảnh báo xâm nhập đang mở bị kết thúc.</div>
+    <div class="rule"><b>Một lần ACK xác nhận những gì đang hiện</b>Cảnh báo phát sinh sau lúc bấm vẫn tiếp tục báo.</div>
+    <div class="rule"><b>Ghi file mỗi lần đổi trạng thái</b>Khởi động lại thì cảnh báo chưa xác nhận được khôi phục và báo tiếp.</div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Giao tiếp</span>
+    <h2>MQTT và trạm cảnh báo</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Topic</th><th>Chiều</th><th>Nội dung</th></tr></thead>
+      <tbody>
+        <tr><td><code>safecam/cam01/event</code></td><td>Pi → ESP32</td><td>Mã sự kiện, loại (xâm nhập/quan sát), khu, thời gian</td></tr>
+        <tr><td><code>safecam/cam01/state</code></td><td>Pi → ESP32, retain</td><td>Trạng thái hiện tại, đèn và còi cần bật</td></tr>
+        <tr><td><code>safecam/cam01/hb</code></td><td>Pi → ESP32</td><td>Tín hiệu còn sống mỗi 2 giây</td></tr>
+        <tr><td><code>safecam/alarm01/ack</code></td><td>ESP32 → Pi</td><td>Danh sách mã sự kiện được xác nhận, gửi lặp mỗi giây tới khi Pi xác nhận đã nhận</td></tr>
+        <tr><td><code>safecam/cam01/status</code><br><code>safecam/alarm01/status</code></td><td>LWT</td><td>Thiết bị online hay offline</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ưu tiên</th><th>Tình huống</th><th>Đèn</th><th>Còi</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>Đang cảnh báo xâm nhập</td><td><span class="lamp"><i class="dot red blink"></i>Đỏ nháy</span></td><td>Kêu</td></tr>
+          <tr><td class="num">2</td><td>ESP32 mất tín hiệu từ Pi</td><td><span class="lamp"><i class="dot alt"></i>Cam/đỏ xen kẽ</span></td><td>Bíp ngắn</td></tr>
+          <tr><td class="num">3</td><td>Cảnh báo quan sát chưa ACK</td><td><span class="lamp"><i class="dot orange blink"></i>Cam nháy</span></td><td>Nhịp khác</td></tr>
+          <tr><td class="num">4</td><td>Xâm nhập đã ACK, chờ vắng</td><td><span class="lamp"><i class="dot red"></i>Đỏ sáng</span></td><td>Tắt</td></tr>
+          <tr><td class="num">5</td><td>Mất quan sát, đã ACK</td><td><span class="lamp"><i class="dot orange"></i>Cam sáng</span></td><td>Tắt</td></tr>
+          <tr><td class="num">6</td><td>Bình thường</td><td><span class="lamp"><i class="dot yellow"></i>Vàng</span></td><td>Tắt</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Chân ESP32</th><th>Tín hiệu</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td class="num">IO25</td><td>LED_ALARM</td><td>LED đỏ, 330 Ω</td></tr>
+          <tr><td class="num">IO26</td><td>LED_OK</td><td>LED xanh lá, 330 Ω</td></tr>
+          <tr><td class="num">IO27</td><td>LED_WARN</td><td>LED vàng, 330 Ω</td></tr>
+          <tr><td class="num">IO23</td><td>BUZZER</td><td>Còi 5 V qua Q1, diode D1</td></tr>
+          <tr><td class="num">IO21 / IO22</td><td>SDA / SCL</td><td>OLED I2C</td></tr>
+          <tr><td class="num">IO34</td><td>BTN_ACK</td><td>Kéo lên 10 kΩ, tụ 100 nF</td></tr>
+          <tr><td class="num">IO35</td><td>BTN_MUTE</td><td>Tắt còi tại chỗ khi mất kết nối</td></tr>
+          <tr><td class="num">IO32 / IO33</td><td>BTN_NEXT / BTN_TEST</td><td>Chưa có trong đề xuất</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="caption"><span class="flag">Cần chốt</span> Bảng ưu tiên dùng màu cam, nhưng mạch chỉ có LED đỏ, xanh lá và vàng.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Ngoài vòng chạy</span>
+    <h2>Các phần chuẩn bị và triển khai</h2>
+    <p class="caption">Những thư mục này không chạy trong vòng suy luận, nhưng tạo ra mô hình, cấu hình và môi trường cho Pi.</p>
+  </div>
+  <div class="offline">
+    <div class="off">
+      <span class="path">ml/</span>
+      <span>Colab: thu dữ liệu tại hiện trường, gán nhãn sơ bộ bằng YOLO11m rồi sửa tay, chia tập theo buổi quay, fine-tune ở 320 px, thêm mẫu âm khó.</span>
+      <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên test_normal, test_hard, test_external</span>
+    </div>
+    <div class="off">
+      <span class="path">tools/</span>
+      <span>Quay dữ liệu theo nhãn điều kiện, click ranh giới khu, đo FPS và nhiệt độ 30–60 phút, đo độ trễ bằng LED GPIO.</span>
+      <span class="out">Ra: <code>zones.yaml</code>, log hiệu năng, số đo độ trễ</span>
+    </div>
+    <div class="off">
+      <span class="path">config/</span>
+      <span>Cấu hình dùng chung cho chương trình chính và script thu dữ liệu: camera, khu, ngưỡng phát hiện, MQTT.</span>
+      <span class="out">Ra: <code>camera</code>, <code>zones</code>, <code>detection</code>, <code>mqtt.yaml</code>; mật khẩu trong <code>.env</code></span>
+    </div>
+    <div class="off">
+      <span class="path">deploy/ · hardware/</span>
+      <span>Unit systemd để Pi cắm điện là chạy; cấu hình Mosquitto có tài khoản và ACL. Mạch ESP32 thiết kế trên EasyEDA.</span>
+      <span class="out">Ra: <code>safecam.service</code>, <code>mosquitto/safecam.conf</code>, Gerber</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Hiện trạng</span>
+    <h2>Repo đang ở đâu</h2>
+  </div>
+  <div class="status">
+    <div>
+      <ul class="issues">
+        <li>Mười module trong <code>pi/safecam/</code> mới là file trống có dòng TODO. Chưa có test nào.</li>
+        <li><code>config/</code>, <code>esp32/</code>, <code>ml/</code>, <code>tools/</code>, <code>deploy/</code> mới có README, chưa có file thật.</li>
+        <li>README của <code>pi/</code> và <code>pi/tests/</code> trỏ tới số mục của bản đề xuất cũ. Ở bản 12, MQTT là mục 6 và K1–K13 nằm ở mục 7.</li>
+        <li>Màu LED và vai trò các nút NEXT, TEST cần thống nhất giữa đề xuất và mạch.</li>
+      </ul>
+    </div>
+    <ol class="timeline">
+      <li class="next"><span class="d">03/11</span><span>YOLO11n NCNN chạy trên Pi, có số đo FPS; broker chạy</span></li>
+      <li><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK</span></li>
+      <li><span class="d">17/11</span><span>Dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy</span></li>
+      <li><span class="d">24/11</span><span>Kiểm thử K1–K13, đo độ trễ, chạy nền 24 giờ</span></li>
+      <li><span class="d">01/12</span><span>Hoàn thiện báo cáo, slide, video demo</span></li>
+      <li><span class="d">06/12</span><span>Nộp quyển</span></li>
+    </ol>
+  </div>
+</section>
+
+</div>
