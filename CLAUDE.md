@@ -1,6 +1,7 @@
 # CLAUDE.md – ĐATN Nhóm 17: Hệ thống phát hiện người xâm nhập
 
 Đọc file này đầu mỗi phiên. Thiết kế đầy đủ: @docs/de_xuat_trien_khai_DATN_nhom17_12.md
+Những gì đã trao đổi và lý do các quyết định: @docs/tom_tat_trao_doi.md
 
 ## Dự án
 - Đồ án tốt nghiệp PTIT, nhóm 2 người: Hoàng Trung Anh (phía Pi, mô hình, dữ liệu), Nguyễn Nhật Thăng (ESP32, giám sát camera, broker, watchdog).
