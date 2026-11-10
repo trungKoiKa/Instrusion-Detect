@@ -14,6 +14,8 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | Git: mỗi phần một nhánh + một PR, commit tới đâu đẩy tới đó, **không xóa nhánh**, **không dòng Co-Authored-By: Claude** | Đồ án cần giữ lịch sử và đứng tên người làm |
 | (10/11) **Rút gọn dữ liệu và train**: ~10 video ngắn có đủ điều kiện khó + 1–2 video không người; gán nhãn trên CVAT (frame step, vẽ theo vệt); chia theo video thành `train`/`val`/`test`; bỏ test_hard, test_external, trộn COCO, vòng mẫu âm khó riêng, YOLO11m gán sơ bộ, `collect_data.py` | Người dùng phản biện: quy mô đồ án không cần phức tạp. Rà bằng skill Ultralytics: chia theo video là bắt buộc (chống rò rỉ ảnh gần giống), ảnh nền giảm báo nhầm, dữ liệu nhỏ thì dùng mô hình đã học sẵn và thử `freeze=10`. Roboflow miễn phí công khai dataset nên dùng CVAT. Mất số liệu theo từng điều kiện, bù bằng hình so sánh |
 | Giữ YOLO11n, không đổi sang YOLO26n | YOLO26 là mặc định cho dự án mới, nhưng YOLO11n đã đo trên Pi (7,47 FPS); đổi lúc này phải xuất và đo lại. Ghi vào hướng phát triển |
+| (10/11) **Dữ liệu: 6 video × 1 phút, một ngày, `--step 5`, chia 4/1/1**; tách ảnh bằng `tools/extract_frames.py` (OpenCV) thay vì CVAT frame step; mẫu nền là vài giây đầu mỗi video | Người dùng muốn ít video và tự tách ảnh bằng Python. Đổi ánh sáng (không làm tối) và trang phục giữa các video thay cho việc quay nhiều ngày. `--step 5` cho ~2.160 ảnh, tập test lớn hơn. Giới hạn: một phòng, một ngày, test chỉ một video, ghi vào báo cáo |
+| Augmentation để mặc định của Ultralytics | Ultralytics tự augment trực tuyến, chỉ trên train (sáng tối, lật ngang, phóng thu, mosaic hợp với người xa và bị che). Giữ `degrees=0`, `flipud=0` vì camera đặt ngang. Không tạo file ảnh augment |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
