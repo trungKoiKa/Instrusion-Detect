@@ -50,20 +50,18 @@ Broker đặt ngay trên Pi, nên mất Internet hệ thống vẫn cảnh báo 
 
 ## 4. Fine-tune mô hình
 
-1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai. Quay theo kịch bản cho từng điều kiện: đứng ở vị trí xa nhất; ngồi hoặc đứng sau bàn ghế; quay lưng, đi chéo, đi sát mép khung; cúi, ngồi ghế, ngồi xổm. Có cả cảnh bình thường và cảnh không người. Mỗi đoạn quay gắn nhãn điều kiện (`far`, `occluded`, `angle`, `pose`, `normal`). Mục tiêu khoảng 10 buổi quay ngắn trên nhiều ngày, sau khi lọc còn 1.000–2.000 ảnh. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
-2. **Bổ sung dữ liệu công khai:** vài trăm ảnh người từ COCO, ưu tiên người nhỏ hoặc bị che, để mô hình không quên kiến thức chung.
-3. **Gán nhãn:** cho YOLO11m gán nhãn sơ bộ rồi sửa tay trên CVAT hoặc Label Studio. Riêng tập test thì gán tay toàn bộ.
-4. **Chia tập theo buổi quay**, không chia theo từng ảnh. Tập test gồm `test_normal`, `test_hard` (báo kết quả theo từng nhãn điều kiện) và `test_external` (COCO val2017 đã lọc người nhỏ hoặc bị che). Tập test bị khóa, chỉ dùng cho lần đánh giá cuối.
-5. **Train trên Colab** ở ảnh 320 px, sau đó thêm mẫu âm khó (các ảnh không người nhưng mô hình báo nhầm) rồi train lại. Xuất NCNN và đo lại trên Pi.
+1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai, cùng cấu hình như lúc chạy thật. Quay khoảng 10 video ngắn (30–60 giây) rải trên ít nhất 3 ngày, đổi quần áo và vị trí đồ vật. Mỗi video có người đi lại tự nhiên và chứa đủ các điều kiện khó: đứng ở xa, bị bàn ghế che một phần, quay lưng hoặc đi chéo sát mép khung, cúi hoặc ngồi. Thêm 1–2 video không có người để mô hình bớt báo nhầm. Ghi hình bằng `ffmpeg` trên Pi, không cần script riêng. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
+2. **Gán nhãn trên CVAT**: mỗi video một task, lấy 2 ảnh mỗi giây (frame step 15), một nhãn `person`, vẽ theo vệt (track) để CVAT nội suy khung giữa các ảnh. Khoảng 1.200 ảnh. Xuất định dạng YOLO 1.1. Không dùng Roboflow bản miễn phí vì dataset bị công khai.
+3. **Chia tập theo video**, không chia theo từng ảnh (ảnh cắt từ cùng một video gần giống nhau, chia ngẫu nhiên sẽ làm điểm số cao giả). Khoảng 7 video train, 1 video val, 2 video test, chỉ ba tập `train`, `val`, `test`. Tập test bị khóa, chỉ dùng cho lần đánh giá cuối.
+4. **Train trên Colab** từ `yolo11n.pt` (đã học trên COCO) ở ảnh 320 px, một lớp `person`. Trước khi train kiểm tra dữ liệu bằng `check_det_dataset` và ảnh `train_batch0.jpg`. Xuất NCNN và đo lại trên Pi.
 
 | Thí nghiệm | Ưu tiên |
 | --- | --- |
-| Mô hình gốc và fine-tune trên từng điều kiện, ở cùng mức báo động giả | Bắt buộc |
-| Trước và sau khi thêm mẫu âm khó | Bắt buộc |
+| Mô hình gốc và fine-tune trên tập test (`model.val(split="test")`) | Bắt buộc |
+| Fine-tune toàn bộ và khóa backbone (`freeze=10`), chọn theo val | Nên làm |
 | Ảnh 320 px và 416 px (ảnh hưởng tới người ở xa và tốc độ) | Nên làm |
-| Mô hình gốc và fine-tune trên `test_external` | Nên làm |
 
-Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn.
+Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn. Báo cáo kèm hình so sánh mô hình gốc và fine-tune trên vài ảnh mỗi điều kiện khó.
 
 ## 5. Quản lý trạng thái
 
@@ -111,7 +109,7 @@ Broker Mosquitto chạy trên Pi, cổng 1883, bắt buộc có tài khoản (t�
 
 | Nội dung | Cách đo |
 | --- | --- |
-| Mô hình | Precision, recall, mAP50 trên 3 tập test, so mô hình gốc với fine-tune |
+| Mô hình | Precision, recall, mAP50 trên tập test, so mô hình gốc với fine-tune |
 | Phát hiện xâm nhập | Tỷ lệ bỏ sót và số báo động giả mỗi giờ, qua video kịch bản và chạy liên tục nhiều giờ |
 | Hiệu năng Pi | FPS, CPU, RAM, nhiệt độ, hạ xung (log CSV) |
 | Độ trễ | Quay slow-motion thấy cả vạch khu cấm và đèn ESP32, đếm số khung hình; mỗi điều kiện khoảng 30 lần thử |

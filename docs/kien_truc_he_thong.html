@@ -438,8 +438,8 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="offline">
     <div class="off">
       <span class="path">ml/</span>
-      <span>Colab: thu dữ liệu tại hiện trường, gán nhãn sơ bộ bằng YOLO11m rồi sửa tay, chia tập theo buổi quay, fine-tune ở 320 px, thêm mẫu âm khó.</span>
-      <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên test_normal, test_hard, test_external</span>
+      <span>Colab: video quay tại hiện trường, gán nhãn trên CVAT, chia tập theo video, fine-tune ở 320 px.</span>
+      <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên tập test</span>
     </div>
     <div class="off">
       <span class="path">tools/</span>
@@ -477,7 +477,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
       <ul class="issues">
         <li class="todo">Phía Pi: <code>zones.py</code>, <code>intrusion.py</code>, <code>outputs.py</code>, <code>persistence.py</code>, <code>mqtt_client.py</code>, <code>main.py</code>; <code>zones.yaml</code>, <code>mqtt.yaml</code>. Chưa có test nào trong <code>pi/tests/</code>.</li>
         <li class="todo">Phần của Thăng: firmware <code>esp32/</code>, cấu hình Mosquitto và systemd trong <code>deploy/</code>, <code>observation.py</code>.</li>
-        <li class="todo">Cho mốc 17/11: <code>ml/</code>, <code>collect_data.py</code>, <code>calibrate_zones.py</code>.</li>
+        <li class="todo">Cho mốc 17/11: <code>ml/</code>, <code>calibrate_zones.py</code>.</li>
       </ul>
       <h3>Cần sửa hoặc chốt</h3>
       <ul class="issues">

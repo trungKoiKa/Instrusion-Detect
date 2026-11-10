@@ -1,6 +1,4 @@
 # ml – dữ liệu và huấn luyện (chạy trên Colab)
 
-- `notebooks/`: train thử coco8, fine-tune, đánh giá gốc và fine-tune.
-- `dataset.yaml`: 80 tên lớp COCO, chỉ dùng nhãn person (id 0).
-- Script: trích khung, lọc ảnh trùng, chuyển nhãn, chia tập theo buổi quay.
-- Tập test: `test_normal`, `test_hard` (nhãn điều kiện), `test_external` (COCO val2017 đã lọc). Dữ liệu thật nằm trong `data/` hoặc Google Drive.
+- `notebooks/`: một notebook: gộp nhãn CVAT (đổi tên ảnh theo video), kiểm tra dữ liệu, fine-tune `yolo11n.pt` ở 320 px, đánh giá gốc và fine-tune trên test, xuất NCNN.
+- Dữ liệu: `dataset/images|labels/{train,val,test}`, một lớp `person`, chia theo video, không theo ảnh. Dữ liệu thật nằm trong `data/` hoặc Google Drive, không lên git.
