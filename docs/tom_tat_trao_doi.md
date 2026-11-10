@@ -12,6 +12,8 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | **Bỏ thiếu sáng**; fine-tune cho **người xa, bị che một phần (sau bàn ghế), góc nhìn lạ, cúi/ngồi** | Người dùng muốn thêm dữ liệu điều kiện khó, không phải tối. Vì vậy bỏ luôn phần chặn trần phơi sáng; camera để phơi sáng tự động, chỉ cố định MJPG 640×480 30 fps, 50 Hz, cân bằng trắng |
 | Bản đề xuất rút từ ~12.800 xuống ~2.600 từ | Bản dài khó hiểu. **Tài liệu phải ngắn, dễ hiểu**; chi tiết cài đặt để trong code/README |
 | Git: mỗi phần một nhánh + một PR, commit tới đâu đẩy tới đó, **không xóa nhánh**, **không dòng Co-Authored-By: Claude** | Đồ án cần giữ lịch sử và đứng tên người làm |
+| (10/11) **Rút gọn dữ liệu và train**: ~10 video ngắn có đủ điều kiện khó + 1–2 video không người; gán nhãn trên CVAT (frame step, vẽ theo vệt); chia theo video thành `train`/`val`/`test`; bỏ test_hard, test_external, trộn COCO, vòng mẫu âm khó riêng, YOLO11m gán sơ bộ, `collect_data.py` | Người dùng phản biện: quy mô đồ án không cần phức tạp. Rà bằng skill Ultralytics: chia theo video là bắt buộc (chống rò rỉ ảnh gần giống), ảnh nền giảm báo nhầm, dữ liệu nhỏ thì dùng mô hình đã học sẵn và thử `freeze=10`. Roboflow miễn phí công khai dataset nên dùng CVAT. Mất số liệu theo từng điều kiện, bù bằng hình so sánh |
+| Giữ YOLO11n, không đổi sang YOLO26n | YOLO26 là mặc định cho dự án mới, nhưng YOLO11n đã đo trên Pi (7,47 FPS); đổi lúc này phải xuất và đo lại. Ghi vào hướng phát triển |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
