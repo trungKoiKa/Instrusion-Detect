@@ -50,10 +50,11 @@ Broker đặt ngay trên Pi, nên mất Internet hệ thống vẫn cảnh báo 
 
 ## 4. Fine-tune mô hình
 
-1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai, cùng cấu hình như lúc chạy thật. Quay khoảng 10 video ngắn (30–60 giây) rải trên ít nhất 3 ngày, đổi quần áo và vị trí đồ vật. Mỗi video có người đi lại tự nhiên và chứa đủ các điều kiện khó: đứng ở xa, bị bàn ghế che một phần, quay lưng hoặc đi chéo sát mép khung, cúi hoặc ngồi. Thêm 1–2 video không có người để mô hình bớt báo nhầm. Ghi hình bằng `ffmpeg` trên Pi, không cần script riêng. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
-2. **Gán nhãn trên CVAT**: mỗi video một task, lấy 2 ảnh mỗi giây (frame step 15), một nhãn `person`, vẽ theo vệt (track) để CVAT nội suy khung giữa các ảnh. Khoảng 1.200 ảnh. Xuất định dạng YOLO 1.1. Không dùng Roboflow bản miễn phí vì dataset bị công khai.
-3. **Chia tập theo video**, không chia theo từng ảnh (ảnh cắt từ cùng một video gần giống nhau, chia ngẫu nhiên sẽ làm điểm số cao giả). Khoảng 7 video train, 1 video val, 2 video test, chỉ ba tập `train`, `val`, `test`. Tập test bị khóa, chỉ dùng cho lần đánh giá cuối.
-4. **Train trên Colab** từ `yolo11n.pt` (đã học trên COCO) ở ảnh 320 px, một lớp `person`. Trước khi train kiểm tra dữ liệu bằng `check_det_dataset` và ảnh `train_batch0.jpg`. Xuất NCNN và đo lại trên Pi.
+1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai, cùng cấu hình như lúc chạy thật. Quay 6 video, mỗi video 1 phút, có thể xong trong một ngày. Mỗi video đổi ánh sáng (bật/tắt bớt đèn, mở/đóng rèm, không làm tối) và trang phục. Mỗi video đi theo cùng một trình tự: vài giây đầu không có người (mẫu nền), rồi đứng ở xa, đi chéo hoặc quay lưng sát mép khung, ngồi hoặc đứng sau bàn ghế, cúi hoặc ngồi xổm. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
+2. **Tách ảnh** bằng `tools/extract_frames.py --step 5` (6 ảnh mỗi giây), khoảng 2.160 ảnh. Tên ảnh mang tên video để gộp không trùng và biết ảnh thuộc video nào.
+3. **Gán nhãn trên CVAT**, một nhãn `person`, xuất định dạng YOLO 1.1. Không dùng Roboflow bản miễn phí vì dataset bị công khai.
+4. **Chia tập theo video**, không chia theo từng ảnh (ảnh cắt từ cùng một video gần giống nhau, chia ngẫu nhiên sẽ làm điểm số cao giả): 4 video train, 1 val, 1 test, chỉ ba tập `train`, `val`, `test`. Chọn video test trước khi train (video khác các video còn lại nhiều nhất) và khóa lại, chỉ dùng cho lần đánh giá cuối.
+5. **Train trên Colab** từ `yolo11n.pt` (đã học trên COCO) ở ảnh 320 px, một lớp `person`. Giữ augmentation mặc định của Ultralytics (chỉ áp lên tập train lúc train, không sinh thêm file). Trước khi train kiểm tra dữ liệu bằng `check_det_dataset` và ảnh `train_batch0.jpg`. Xuất NCNN và đo lại trên Pi.
 
 | Thí nghiệm | Ưu tiên |
 | --- | --- |
@@ -61,7 +62,7 @@ Broker đặt ngay trên Pi, nên mất Internet hệ thống vẫn cảnh báo 
 | Fine-tune toàn bộ và khóa backbone (`freeze=10`), chọn theo val | Nên làm |
 | Ảnh 320 px và 416 px (ảnh hưởng tới người ở xa và tốc độ) | Nên làm |
 
-Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn. Báo cáo kèm hình so sánh mô hình gốc và fine-tune trên vài ảnh mỗi điều kiện khó.
+Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn. Báo cáo kèm hình so sánh mô hình gốc và fine-tune trên vài ảnh mỗi điều kiện khó. Giới hạn cần ghi: dữ liệu quay trong một phòng, một ngày, tập test chỉ có một video.
 
 ## 5. Quản lý trạng thái
 

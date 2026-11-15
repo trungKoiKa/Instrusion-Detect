@@ -14,7 +14,7 @@ Những gì đã trao đổi và lý do các quyết định: @docs/tom_tat_trao
 - **Không có chế độ canh gác (arm/disarm)**: chương trình chạy là canh gác. Arm/disarm, RTC chỉ là mở rộng.
 - Hai trạng thái độc lập: xâm nhập và quan sát camera. Pi giữ trạng thái, ESP32 chỉ làm theo. Khung không quan sát được không bao giờ coi là "không có người".
 - Fine-tune cho **người xa, bị che một phần, góc nhìn lạ, cúi/ngồi**. **Không làm thiếu sáng**, không chặn trần phơi sáng; camera để phơi sáng tự động, chỉ cố định MJPG 640×480 30 fps, 50 Hz.
-- Dữ liệu: ~10 video ngắn tại hiện trường (có cả video không người), gán nhãn trên CVAT, **chia tập theo video** thành đúng ba tập `train`, `val`, `test`. Không dùng test_hard/test_external, không trộn COCO, không viết script tự gán nhãn hay trích ảnh.
+- Dữ liệu: 6 video × 1 phút tại hiện trường (một ngày, mỗi video đổi ánh sáng và trang phục, vài giây đầu không người), tách ảnh bằng `tools/extract_frames.py --step 5`, gán nhãn trên CVAT, **chia tập theo video** 4/1/1 thành đúng ba tập `train`, `val`, `test`. Augmentation để mặc định. Không dùng test_hard/test_external, không trộn COCO, không script tự gán nhãn.
 
 ## Cấu trúc
 - `pi/safecam/`: chương trình chính (camera, detector, zones, intrusion, observation, outputs, persistence, mqtt_client, stream, main). `pi/tests/`: pytest, chạy được trên laptop không cần phần cứng.
