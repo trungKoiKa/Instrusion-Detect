@@ -1,0 +1,3 @@
+# 3 mốc x (pixel, ảnh rộng 640) chia khung hình thành 4 khu dọc 0 1 2 3
+boundaries: [160, 320, 480]
+forbidden: [2, 3] # khu cấm 
