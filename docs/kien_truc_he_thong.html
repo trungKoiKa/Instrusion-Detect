@@ -195,6 +195,8 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 .timeline li:last-child { border-bottom: 0; }
 .timeline .d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 500; }
 .timeline li.next .d::after { content: " ●"; color: var(--alarm); }
+.timeline li.late .d { color: var(--warn); }
+.timeline li.late .d::after { content: " !"; color: var(--warn); }
 
 @media (min-width: 820px) {
   .two { grid-template-columns: 1fr 1fr; }
@@ -211,7 +213,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="meta">
     <span>Nguồn: docs/de_xuat_trien_khai_DATN_nhom17_12.md</span>
     <span>Sơ đồ mạch: hardware/PCB_Layout (rev 1.0)</span>
-    <span>Hiện trạng tính tới commit db2c903, 01/11/2026</span>
+    <span>Hiện trạng tính tới commit 8a784ee, 14/11/2026</span>
   </div>
 </header>
 
@@ -333,7 +335,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
     <span><i class="sw" style="border-color: var(--warn)"></i>Trục quan sát camera</span>
     <span><i class="sw" style="border-color: var(--line-strong)"></i>Thiết bị ngoài Pi</span>
   </div>
-  <p class="caption">Pi là nơi duy nhất giữ trạng thái; ESP32 chỉ làm theo bản tin <code>state</code>. Broker đặt ngay trên Pi nên mất Internet vẫn báo động được. Hệ thống chỉ ngừng cảnh báo khi router mất điện.</p>
+  <p class="caption">Pi là nơi duy nhất giữ trạng thái; ESP32 chỉ làm theo bản tin <code>state</code>. Broker đặt ngay trên Pi nên mất Internet vẫn báo động được. Mất router thì ESP32 giữ báo động đang có và báo mất giám sát, nhưng không nhận được sự kiện mới; ESP32 mất điện thì không còn nơi báo động.</p>
 </section>
 
 <section>
@@ -438,17 +440,17 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="offline">
     <div class="off">
       <span class="path">ml/</span>
-      <span>Colab: video quay tại hiện trường, gán nhãn trên CVAT, chia tập theo video, fine-tune ở 320 px.</span>
+      <span>6 video quay tại hiện trường, tách ảnh (<code>--step 5</code>), gán nhãn trên CVAT, chia 4/1/1 video cho train/val/test, fine-tune trên Colab ở 320 px.</span>
       <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên tập test</span>
     </div>
     <div class="off">
       <span class="path">tools/</span>
-      <span>Quay dữ liệu theo nhãn điều kiện, click ranh giới khu, đo FPS và nhiệt độ 30–60 phút, đo độ trễ bằng LED GPIO.</span>
-      <span class="out">Ra: <code>zones.yaml</code>, log hiệu năng, số đo độ trễ</span>
+      <span>Tách ảnh từ video để gán nhãn, click ranh giới khu, đo FPS và nhiệt độ 30–60 phút, đo độ trễ bằng LED GPIO.</span>
+      <span class="out">Ra: ảnh để gán nhãn, <code>zones.yaml</code>, log hiệu năng, số đo độ trễ</span>
     </div>
     <div class="off">
       <span class="path">config/</span>
-      <span>Cấu hình dùng chung cho chương trình chính và script thu dữ liệu: camera, khu, ngưỡng phát hiện, MQTT.</span>
+      <span>Cấu hình của chương trình chính: camera, khu, ngưỡng phát hiện, MQTT. Lúc quay dữ liệu bằng <code>ffmpeg</code> cũng dùng đúng cấu hình camera này.</span>
       <span class="out">Ra: <code>camera</code>, <code>zones</code>, <code>detection</code>, <code>mqtt.yaml</code>; mật khẩu trong <code>.env</code></span>
     </div>
     <div class="off">
@@ -473,23 +475,22 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
         <li class="ok"><code>config.py</code>, <code>camera.yaml</code>, <code>detection.yaml</code>; hướng dẫn cài trên Pi (torch bản CPU).</li>
         <li class="ok">Đo 45 phút trên Pi 4 (<code>bench_pi.py</code>, <code>bench_report.py</code>): <b>7,47 FPS</b> trung bình, phân vị 5% là 7,45; YOLO 99 ms; CPU 74%; cao nhất 51,1 °C; không hạ xung.</li>
       </ul>
-      <h3>Còn thiếu cho mốc 10/11</h3>
+      <h3>Còn thiếu cho mốc 10/11 (đã trễ)</h3>
       <ul class="issues">
         <li class="todo">Phía Pi: <code>zones.py</code>, <code>intrusion.py</code>, <code>outputs.py</code>, <code>persistence.py</code>, <code>mqtt_client.py</code>, <code>main.py</code>; <code>zones.yaml</code>, <code>mqtt.yaml</code>. Chưa có test nào trong <code>pi/tests/</code>.</li>
         <li class="todo">Phần của Thăng: firmware <code>esp32/</code>, cấu hình Mosquitto và systemd trong <code>deploy/</code>, <code>observation.py</code>.</li>
-        <li class="todo">Cho mốc 17/11: <code>ml/</code>, <code>calibrate_zones.py</code>.</li>
+        <li class="todo">Cho mốc 17/11: quay 6 video, <code>extract_frames.py</code>, gán nhãn, notebook trong <code>ml/</code>; <code>observation.py</code>; <code>calibrate_zones.py</code>.</li>
       </ul>
       <h3>Cần sửa hoặc chốt</h3>
       <ul class="issues">
         <li><code>open_camera()</code> chưa áp <code>power_line_frequency</code> (50 Hz) có trong <code>camera.yaml</code>.</li>
-        <li>README của <code>pi/</code> và <code>pi/tests/</code> trỏ tới số mục của bản đề xuất cũ. Ở bản 12, MQTT là mục 6 và K1–K13 nằm ở mục 7.</li>
         <li>Màu LED và vai trò các nút NEXT, TEST cần thống nhất giữa đề xuất và mạch.</li>
       </ul>
     </div>
     <ol class="timeline">
       <li class="done"><span class="d">03/11</span><span>YOLO11n NCNN chạy trên Pi, có số đo FPS (xong 31/10); broker chưa có cấu hình trong repo</span></li>
-      <li class="next"><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK</span></li>
-      <li><span class="d">17/11</span><span>Dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy</span></li>
+      <li class="late"><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK (trễ, chưa có code)</span></li>
+      <li class="next"><span class="d">17/11</span><span>Dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy</span></li>
       <li><span class="d">24/11</span><span>Kiểm thử K1–K13, đo độ trễ, chạy nền 24 giờ</span></li>
       <li><span class="d">01/12</span><span>Hoàn thiện báo cáo, slide, video demo</span></li>
       <li><span class="d">06/12</span><span>Nộp quyển</span></li>
