@@ -17,7 +17,7 @@ So với đề cương, đồ án bổ sung ba điểm:
 | Độ trễ từ lúc người vào khu cấm tới lúc còi kêu | 95% số lần thử dưới 2 giây |
 | Fine-tune | Recall tăng trên các điều kiện khó, cảnh bình thường không giảm |
 | Báo động giả | Đo số lần mỗi giờ khi chạy liên tục |
-| Xử lý sự cố | Đạt các kịch bản K1–K13 (mục 7) |
+| Xử lý sự cố | Đạt 7 kịch bản sự cố ở mục 7 |
 
 ## 2. Kiến trúc
 
@@ -50,19 +50,18 @@ Broker đặt ngay trên Pi, nên mất Internet hệ thống vẫn cảnh báo 
 
 ## 4. Fine-tune mô hình
 
-1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai, cùng cấu hình như lúc chạy thật. Quay 6 video, mỗi video 1 phút, có thể xong trong một ngày. Mỗi video đổi ánh sáng (bật/tắt bớt đèn, mở/đóng rèm, không làm tối) và trang phục. Mỗi video đi theo cùng một trình tự: vài giây đầu không có người (mẫu nền), rồi đứng ở xa, đi chéo hoặc quay lưng sát mép khung, ngồi hoặc đứng sau bàn ghế, cúi hoặc ngồi xổm. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
-2. **Tách ảnh** bằng `tools/extract_frames.py --step 5` (6 ảnh mỗi giây), khoảng 2.160 ảnh. Tên ảnh mang tên video để gộp không trùng và biết ảnh thuộc video nào.
+1. **Thu dữ liệu** bằng chính C270, đặt đúng vị trí triển khai, cùng cấu hình như lúc chạy thật. Quay 7 video, mỗi video 1 phút. Sáu video đầu quay trong một ngày; video thứ bảy quay vào ngày khác, đổi vị trí đồ vật, và chỉ dùng cho tập test. Mỗi video đổi ánh sáng (bật/tắt bớt đèn, mở/đóng rèm, không làm tối) và trang phục. Mỗi video đi theo cùng một trình tự: vài giây đầu không có người (mẫu nền), rồi đứng ở xa, đi chéo hoặc quay lưng sát mép khung, ngồi hoặc đứng sau bàn ghế, cúi hoặc ngồi xổm. Chỉ quay người có giấy đồng ý (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP), làm mờ mặt khi đưa vào quyển.
+2. **Tách ảnh** bằng `tools/extract_frames.py --step 5` (6 ảnh mỗi giây), khoảng 2.520 ảnh. Tên ảnh mang tên video để gộp không trùng và biết ảnh thuộc video nào.
 3. **Gán nhãn trên CVAT**, một nhãn `person`, xuất định dạng YOLO 1.1. Không dùng Roboflow bản miễn phí vì dataset bị công khai.
-4. **Chia tập theo video**, không chia theo từng ảnh (ảnh cắt từ cùng một video gần giống nhau, chia ngẫu nhiên sẽ làm điểm số cao giả): 4 video train, 1 val, 1 test, chỉ ba tập `train`, `val`, `test`. Chọn video test trước khi train (video khác các video còn lại nhiều nhất) và khóa lại, chỉ dùng cho lần đánh giá cuối.
+4. **Chia tập theo video**, không chia theo từng ảnh (ảnh cắt từ cùng một video gần giống nhau, chia ngẫu nhiên sẽ làm điểm số cao giả): 4 video train, 1 val, 2 test, chỉ ba tập `train`, `val`, `test`. Chọn 2 video test trước khi train (video quay ngày khác và video khác các video còn lại nhiều nhất) rồi khóa lại, chỉ dùng cho lần đánh giá cuối.
 5. **Train trên Colab** từ `yolo11n.pt` (đã học trên COCO) ở ảnh 320 px, một lớp `person`. Giữ augmentation mặc định của Ultralytics (chỉ áp lên tập train lúc train, không sinh thêm file). Trước khi train kiểm tra dữ liệu bằng `check_det_dataset` và ảnh `train_batch0.jpg`. Xuất NCNN và đo lại trên Pi.
 
 | Thí nghiệm | Ưu tiên |
 | --- | --- |
 | Mô hình gốc và fine-tune trên tập test (`model.val(split="test")`) | Bắt buộc |
-| Fine-tune toàn bộ và khóa backbone (`freeze=10`), chọn theo val | Nên làm |
-| Ảnh 320 px và 416 px (ảnh hưởng tới người ở xa và tốc độ) | Nên làm |
+| Fine-tune toàn bộ và khóa backbone (`freeze=10`), chọn theo val | Nếu còn thời gian |
 
-Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn. Báo cáo kèm hình so sánh mô hình gốc và fine-tune trên vài ảnh mỗi điều kiện khó. Giới hạn cần ghi: dữ liệu quay trong một phòng, một ngày, tập test chỉ có một video.
+Mô hình fine-tune được train 3 lần với seed khác nhau, báo cáo trung bình và độ lệch chuẩn. Báo cáo kèm hình so sánh mô hình gốc và fine-tune trên vài ảnh mỗi điều kiện khó. Giới hạn cần ghi: dữ liệu quay trong một phòng, hai ngày, tập test chỉ có hai video.
 
 ## 5. Quản lý trạng thái
 
@@ -111,27 +110,21 @@ Broker Mosquitto chạy trên Pi, cổng 1883, bắt buộc có tài khoản (t�
 | Nội dung | Cách đo |
 | --- | --- |
 | Mô hình | Precision, recall, mAP50 trên tập test, so mô hình gốc với fine-tune |
-| Phát hiện xâm nhập | Tỷ lệ bỏ sót và số báo động giả mỗi giờ, qua video kịch bản và chạy liên tục nhiều giờ |
+| Phát hiện xâm nhập | Tỷ lệ bỏ sót và số báo động giả mỗi giờ, qua video kịch bản và chạy liên tục 4–6 giờ |
 | Hiệu năng Pi | FPS, CPU, RAM, nhiệt độ, hạ xung (log CSV) |
 | Độ trễ | Quay slow-motion thấy cả vạch khu cấm và đèn ESP32, đếm số khung hình; mỗi điều kiện khoảng 30 lần thử |
 | Giám sát camera | Rút cáp, che bằng tay, giả lập chương trình treo, tắt bớt đèn (để kiểm tra không báo nhầm) |
 | Độ ổn định | Tắt router, khởi động lại Pi, rút nguồn ESP32; đo thời gian khôi phục |
 
-Kịch bản sự cố (mỗi kịch bản thử ít nhất 5 lần):
+Kịch bản sự cố (mỗi kịch bản thử ít nhất 5 lần). Số thứ tự giữ theo bản trước; các kịch bản K2, K3, K6, K8, K9, K11 chuyển sang hướng phát triển (mục 10).
 
 | # | Kịch bản | Kết quả đúng |
 | --- | --- | --- |
 | K1 | Đang cảnh báo → che camera → ACK → bỏ che | Sự kiện vẫn mở, chỉ kết thúc khi thấy khu cấm vắng đủ T giây |
-| K2 | Đã ACK, người còn đứng trong khu → che vài phút → bỏ che | Sự kiện không kết thúc |
-| K3 | Che camera ngắn lặp lại trong lúc người đi vào | Có cảnh báo xâm nhập hoặc cảnh báo quan sát, không im lặng |
 | K4 | Che camera, đi vào khu, bỏ che | Cảnh báo ngay, nhãn "xâm nhập sau mất quan sát" |
 | K5 | Đang cảnh báo → tắt router → bấm nút → bật router | Còi tắt tại chỗ, kết nối lại thì ACK được đồng bộ |
-| K6 | Mất kết nối, bấm nút, trong lúc đó có sự kiện mới | Chỉ sự kiện cũ được xác nhận |
 | K7 | Đang cảnh báo → khởi động lại Pi | Sự kiện được khôi phục, ESP32 tiếp tục báo |
-| K8 | Khởi động lại Pi rồi che camera ngay | Sau 60 giây khởi động có cảnh báo quan sát |
-| K9 | Khởi động lại khi không có Internet | Vẫn chạy đúng, log đánh dấu giờ chưa đồng bộ |
 | K10 | Người vẫn trong khu sau khi sự kiện kết thúc | Mở sự kiện mới |
-| K11 | Vòng YOLO treo nhưng MQTT vẫn sống | ESP32 báo mất giám sát, watchdog khởi động lại chương trình |
 | K12 | Rút cáp camera rồi cắm lại | Cảnh báo quan sát, camera tự mở lại |
 | K13 | Mất điện ngay sau khi trạng thái đổi | File trạng thái không bị hỏng |
 
@@ -158,14 +151,14 @@ Có video quay sẵn để dự phòng.
 | Trạng thái | Hai trạng thái, lưu bền | ESP32 làm theo `state`, ACK, xử lý mất kết nối |
 | Giám sát camera | Cung cấp ảnh và kết quả YOLO | Module giám sát, watchdog |
 | MQTT, ESP32 | Publish sự kiện | Broker, bảo mật, firmware |
-| Đánh giá | Mô hình, hiệu năng Pi | Độ trễ, độ ổn định, kịch bản K1–K13 |
+| Đánh giá | Mô hình, hiệu năng Pi | Độ trễ, độ ổn định, 7 kịch bản sự cố |
 
 | Mốc | Cần có |
 | --- | --- |
 | 03/11 | YOLO11n NCNN chạy trên Pi, có số đo FPS; broker chạy |
 | 10/11 | Lõi chạy đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK (mô hình gốc) |
 | 17/11 | Có dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy |
-| 24/11 | Kiểm thử K1–K13, đo độ trễ, chạy nền 24 giờ; có số liệu chương 3 |
+| 24/11 | Kiểm thử 7 kịch bản sự cố, đo độ trễ, chạy nền 4–6 giờ; có số liệu chương 3 |
 | 01/12 | Hoàn thiện báo cáo, slide, video demo |
 | 06/12 | Nộp quyển |
 
@@ -176,6 +169,8 @@ Các mốc 13/10 và 27/10 trong bản trước đã trễ, nên lịch trên l�
 **Làm:** một camera, 4 khu dọc, YOLO11n NCNN, cửa sổ T giây, MQTT–ESP32, ACK, fine-tune cho điều kiện khó, giám sát camera cơ bản (mất hình, treo, bị che).
 
 **Làm nếu còn thời gian sau 10/11:** chế độ canh gác theo lịch (arm/disarm, cần thêm RTC DS3231), phát hiện camera bị mờ hoặc bị xoay, thông báo Telegram.
+
+**Hướng phát triển (ghi trong báo cáo, không làm):** các kịch bản K2, K3, K6, K8, K9, K11 (che camera lặp lại, bấm nút khi mất kết nối có sự kiện mới, che camera ngay sau khởi động, khởi động không có Internet, vòng YOLO treo); thí nghiệm ảnh 416 px; chạy nền 24 giờ.
 
 **Không làm:** thiếu sáng và bóng tối, nhận diện khuôn mặt, nhận diện hành động, web dashboard hoặc cloud, lượng tử hóa INT8.
 

@@ -16,6 +16,8 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | Giữ YOLO11n, không đổi sang YOLO26n | YOLO26 là mặc định cho dự án mới, nhưng YOLO11n đã đo trên Pi (7,47 FPS); đổi lúc này phải xuất và đo lại. Ghi vào hướng phát triển |
 | (10/11) **Dữ liệu: 6 video × 1 phút, một ngày, `--step 5`, chia 4/1/1**; tách ảnh bằng `tools/extract_frames.py` (OpenCV) thay vì CVAT frame step; mẫu nền là vài giây đầu mỗi video | Người dùng muốn ít video và tự tách ảnh bằng Python. Đổi ánh sáng (không làm tối) và trang phục giữa các video thay cho việc quay nhiều ngày. `--step 5` cho ~2.160 ảnh, tập test lớn hơn. Giới hạn: một phòng, một ngày, test chỉ một video, ghi vào báo cáo |
 | Augmentation để mặc định của Ultralytics | Ultralytics tự augment trực tuyến, chỉ trên train (sáng tối, lật ngang, phóng thu, mosaic hợp với người xa và bị che). Giữ `degrees=0`, `flipud=0` vì camera đặt ngang. Không tạo file ảnh augment |
+| (17/11) **Rút gọn phạm vi đánh giá**: giữ 7 kịch bản K1, K4, K5, K7, K10, K12, K13; chạy nền 4–6 giờ thay cho 24 giờ; bỏ thí nghiệm 416 px; `freeze=10` chỉ làm nếu còn thời gian | Còn 19 ngày tới hạn nộp 06/12 mà lõi đầu-cuối chưa xong. Các kịch bản bị bỏ (K2, K3, K6, K8, K9, K11), 416 px và chạy 24 giờ ghi vào hướng phát triển |
+| (17/11) **Thêm video thứ 7, quay ngày khác, chỉ dùng cho test**; chia 4/1/2, khoảng 2.520 ảnh | Tập test một video cùng ngày quá yếu để kết luận fine-tune có tác dụng. Thêm 10 phút quay và khoảng 360 ảnh gán nhãn |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
