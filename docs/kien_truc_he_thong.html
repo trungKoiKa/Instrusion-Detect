@@ -440,7 +440,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="offline">
     <div class="off">
       <span class="path">ml/</span>
-      <span>6 video quay tại hiện trường, tách ảnh (<code>--step 5</code>), gán nhãn trên CVAT, chia 4/1/1 video cho train/val/test, fine-tune trên Colab ở 320 px.</span>
+      <span>7 video quay tại hiện trường, tách ảnh (<code>--step 5</code>), gán nhãn trên CVAT, chia 4/1/2 video cho train/val/test, fine-tune trên Colab ở 320 px.</span>
       <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên tập test</span>
     </div>
     <div class="off">
@@ -479,7 +479,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
       <ul class="issues">
         <li class="todo">Phía Pi: <code>zones.py</code>, <code>intrusion.py</code>, <code>outputs.py</code>, <code>persistence.py</code>, <code>mqtt_client.py</code>, <code>main.py</code>; <code>zones.yaml</code>, <code>mqtt.yaml</code>. Chưa có test nào trong <code>pi/tests/</code>.</li>
         <li class="todo">Phần của Thăng: firmware <code>esp32/</code>, cấu hình Mosquitto và systemd trong <code>deploy/</code>, <code>observation.py</code>.</li>
-        <li class="todo">Cho mốc 17/11: quay 6 video, <code>extract_frames.py</code>, gán nhãn, notebook trong <code>ml/</code>; <code>observation.py</code>; <code>calibrate_zones.py</code>.</li>
+        <li class="todo">Cho mốc 17/11: quay 7 video, <code>extract_frames.py</code>, gán nhãn, notebook trong <code>ml/</code>; <code>observation.py</code>; <code>calibrate_zones.py</code>.</li>
       </ul>
       <h3>Cần sửa hoặc chốt</h3>
       <ul class="issues">
@@ -491,7 +491,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
       <li class="done"><span class="d">03/11</span><span>YOLO11n NCNN chạy trên Pi, có số đo FPS (xong 31/10); broker chưa có cấu hình trong repo</span></li>
       <li class="late"><span class="d">10/11</span><span>Lõi đầu-cuối: camera → 4 khu → MQTT → ESP32 kêu → ACK (trễ, chưa có code)</span></li>
       <li class="next"><span class="d">17/11</span><span>Dữ liệu đã gán nhãn, fine-tune lần đầu; giám sát camera chạy</span></li>
-      <li><span class="d">24/11</span><span>Kiểm thử K1–K13, đo độ trễ, chạy nền 24 giờ</span></li>
+      <li><span class="d">24/11</span><span>Kiểm thử 7 kịch bản sự cố, đo độ trễ, chạy nền 4–6 giờ</span></li>
       <li><span class="d">01/12</span><span>Hoàn thiện báo cáo, slide, video demo</span></li>
       <li><span class="d">06/12</span><span>Nộp quyển</span></li>
     </ol>
