@@ -1,7 +1,24 @@
 import cv2
+import subprocess
 import threading
-import time
-import sys
+import time 
+import sys 
+
+def apply_v4l2_controls(cfg):                                        
+    """Áp các control mà OpenCV không đặt được (tần số điện lưới).
+    Chỉ chạy trên Linux; trên laptop Windows thì bỏ qua."""
+    if not sys.platform.startswith("linux"):
+        return
+    cmd = ["v4l2-ctl", "-d", str(cfg["device"]),
+           "-c", f"power_line_frequency={cfg['power_line_frequency']}"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError) as e:
+        print("Không chạy được v4l2-ctl:", e)
+        return
+    if r.returncode != 0:
+        print("Không đặt được power_line_frequency:", r.stderr.strip())
+
 
 def open_camera(cfg):
     backend = cv2.CAP_V4L2 if sys.platform.startswith("linux") else cv2.CAP_ANY
@@ -10,6 +27,8 @@ def open_camera(cfg):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, cfg["width"])
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cfg["height"])
     cap.set(cv2.CAP_PROP_FPS, cfg["fps"])
+    if cap.isOpened():
+        apply_v4l2_controls(cfg)
     return cap
 
 
