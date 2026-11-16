@@ -1,3 +1,9 @@
 model: yolo11n_ncnn_model   # thư mục mô hình NCNN
 imgsz: 320                  # cỡ ảnh đưa vào YOLO
 conf: 0.25                  # ngưỡng tin cậy tạm thời
+
+# Cửa sổ báo động từng khu cấm (tạm thời, sẽ chọn lại trên tập val)
+window_s: 2.0 # T giây
+k_min: 5 # Số lần thấy người tối thiểu trong cửa sổ
+p: 0.5 # tỷ lệ ảnh thấy người tối thiểu 
+n_min: 8 # ít hơn số ảnh này trong cửa sổ thì không phát hiện được
