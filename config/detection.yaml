@@ -6,4 +6,4 @@ conf: 0.25                  # ngưỡng tin cậy tạm thời
 window_s: 2.0 # T giây
 k_min: 5 # Số lần thấy người tối thiểu trong cửa sổ
 p: 0.5 # tỷ lệ ảnh thấy người tối thiểu 
-n_min: 8 # ít hơn số ảnh này trong cửa sổ thì không phát hiện được
+n_min: 8 # ít hơn số ảnh này trong cửa sổ thì không kết luận được; n_min / window_s = FPS tối thiểu (hiện là 4)

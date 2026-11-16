@@ -87,3 +87,27 @@ def test_from_config():
     mon = ZoneMonitor.from_config({"boundaries":BOUNDS, "forbidden": [2, 3]},
                                     {"window_s": 2.0, "k_min": 5, "p": 0.5, "n_min": 8})
     assert set(mon.windows) == {2, 3}
+
+def test_boundaries_must_not_repeat():
+    with pytest.raises(ValueError):
+        ZoneMonitor([160, 160, 480], [2], 2.0, 5, 0.5, 8)
+
+def test_forbidden_zone_must_exist():
+    with pytest.raises(ValueError):
+        ZoneMonitor(BOUNDS, [7], 2.0, 5, 0.5, 8)
+
+def test_forbidden_must_not_be_empty():
+    with pytest.raises(ValueError):
+        ZoneMonitor(BOUNDS, [], 2.0, 5, 0.5, 8)
+
+@pytest.mark.parametrize("window_s, k_min, p, n_min", [
+    (0, 5, 0.5, 8),   # cửa sổ 0 giây
+    (2.0, 0, 0.5, 8), # k_min = 0
+    (2.0, 5, 0, 8),   # p = 0
+    (2.0, 5, 1.5, 8), # p > 1
+    (2.0, 5, 0.5, 0), # n_min = 0
+])
+
+def test_bad_window_params(window_s, k_min, p, n_min):
+    with pytest.raises(ValueError):
+        ZoneMonitor(BOUNDS, [2], window_s, k_min, p, n_min)

@@ -23,10 +23,20 @@ def occupied_zones(detections, boundaries):
 class ZoneWindow:
     """ Cửa sổ trượt T giây của 1 khu: nhớ mỗi ảnh
     đã xử lý có thấy người hay không. """
+
     def __init__(self, window_s, k_min, p, n_min):
+        #Cấu hình sai thì dừng lập tức lúc khởi động, không chạy trong im lặng
+        if window_s <= 0:
+            raise ValueError("window_s phải > 0")
+        if k_min < 1:
+            raise ValueError("k_min phải >= 1")
+        if not 0 < p <= 1:
+            raise ValueError("p phải nằm trong (0, 1]")
+        if n_min < 1:
+            raise ValueError("n_min phải >= 1")
         self.window_s = window_s
         self.k_min = k_min
-        self.p = p
+        self.p = p 
         self.n_min = n_min
         self.samples = deque() # (thời điểm, có người)
 
@@ -61,9 +71,19 @@ class ZoneMonitor:
     """Giữ một ZoneWindow cho mỗi khu cấm."""
 
     def __init__(self, boundaries, forbidden, window_s, k_min, p, n_min):
-        if list(boundaries) != sorted(boundaries):
-            raise ValueError("boundaries phải tăng dần.")
-        self.boundaries = list(boundaries)
+        boundaries = list(boundaries)
+        # Mốc phải tăng nghiêm ngặt: mốc trùng nhau tạo ra khu rộng 0 pixel
+        if any(a >= b for a, b in zip(boundaries, boundaries[1:])):
+            raise ValueError("boundaries phải tăng dần và không trùng nhau")
+        # Không có khu cấm thì chương trình chạy mà không canh gì
+        if not forbidden:
+            raise ValueError("forbidden rỗng: không có khu cấm nào để canh")
+        # N mốc chia ra N + 1 khu, đánh số từ 0
+        n_zones = len(boundaries) + 1
+        bad = [z for z in forbidden if z not in range(n_zones)]
+        if bad:
+            raise ValueError(f"forbidden có khu không tồn tại: {bad} (chỉ có khu 0 đến {n_zones - 1}).")
+        self.boundaries = boundaries
         self.windows = {z : ZoneWindow(window_s, k_min, p, n_min) for z in forbidden}
 
     @classmethod
