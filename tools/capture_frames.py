@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--rate", type=float, default=2, help="số ảnh mỗi giây")
     ap.add_argument("--delay", type=float, default=5, help="đếm ngược trước khi chụp (giây)")
     ap.add_argument("--show", action="store_true", help="hiện cửa sổ hình (cần màn hình)")
+    ap.add_argument("--device", type=int, default=0, help="số camera trên Windows (0, 1, ...)")
     args = ap.parse_args()
 
     # Không ghi đè phiên cũ: lỡ gõ trùng tên thì dừng ngay
@@ -39,7 +40,7 @@ def main():
 
     cfg = load_config("camera")
     if sys.platform == "win32":
-        cfg["device"] = 0           # laptop: webcam máy
+        cfg["device"] = args.device     # laptop: chọn đúng C270, không phải webcam máy
 
     total = int(args.seconds * args.rate)
     interval = 1 / args.rate
