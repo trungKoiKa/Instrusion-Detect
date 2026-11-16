@@ -440,7 +440,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   <div class="offline">
     <div class="off">
       <span class="path">ml/</span>
-      <span>7 video quay tại hiện trường, tách ảnh (<code>--step 5</code>), gán nhãn trên CVAT, chia 4/1/2 video cho train/val/test, fine-tune trên Colab ở 320 px.</span>
+      <span>7 phiên tự chụp 2 ảnh/giây tại hiện trường (<code>capture_frames.py</code>), gán nhãn trên CVAT, chia 4/1/2 phiên cho train/val/test, fine-tune trên Colab ở 320 px.</span>
       <span class="out">Ra: mô hình NCNN cho <code>detector.py</code>; số liệu trên tập test</span>
     </div>
     <div class="off">
@@ -450,7 +450,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
     </div>
     <div class="off">
       <span class="path">config/</span>
-      <span>Cấu hình của chương trình chính: camera, khu, ngưỡng phát hiện, MQTT. Lúc quay dữ liệu bằng <code>ffmpeg</code> cũng dùng đúng cấu hình camera này.</span>
+      <span>Cấu hình của chương trình chính: camera, khu, ngưỡng phát hiện, MQTT. Lúc thu dữ liệu bằng <code>capture_frames.py</code> cũng dùng đúng cấu hình camera này.</span>
       <span class="out">Ra: <code>camera</code>, <code>zones</code>, <code>detection</code>, <code>mqtt.yaml</code>; mật khẩu trong <code>.env</code></span>
     </div>
     <div class="off">
@@ -479,7 +479,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
       <ul class="issues">
         <li class="todo">Phía Pi: <code>zones.py</code>, <code>intrusion.py</code>, <code>outputs.py</code>, <code>persistence.py</code>, <code>mqtt_client.py</code>, <code>main.py</code>; <code>zones.yaml</code>, <code>mqtt.yaml</code>. Chưa có test nào trong <code>pi/tests/</code>.</li>
         <li class="todo">Phần của Thăng: firmware <code>esp32/</code>, cấu hình Mosquitto và systemd trong <code>deploy/</code>, <code>observation.py</code>.</li>
-        <li class="todo">Cho mốc 17/11: quay 7 video, <code>extract_frames.py</code>, gán nhãn, notebook trong <code>ml/</code>; <code>observation.py</code>; <code>calibrate_zones.py</code>.</li>
+        <li class="todo">Cho mốc 17/11: chụp 7 phiên bằng <code>capture_frames.py</code>, gán nhãn, notebook trong <code>ml/</code>; <code>observation.py</code>; <code>calibrate_zones.py</code>.</li>
       </ul>
       <h3>Cần sửa hoặc chốt</h3>
       <ul class="issues">
