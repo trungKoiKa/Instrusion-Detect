@@ -21,7 +21,12 @@ def apply_v4l2_controls(cfg):
 
 
 def open_camera(cfg):
-    backend = cv2.CAP_V4L2 if sys.platform.startswith("linux") else cv2.CAP_ANY
+    if sys.platform.startswith("linux"):
+        backend = cv2.CAP_V4L2          # Pi
+    elif sys.platform == "win32":
+        backend = cv2.CAP_DSHOW         # laptop: MSMF (mặc định) treo khi mở C270
+    else:
+        backend = cv2.CAP_ANY
     cap = cv2.VideoCapture(cfg["device"], backend)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*cfg["fourcc"]))
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, cfg["width"])
