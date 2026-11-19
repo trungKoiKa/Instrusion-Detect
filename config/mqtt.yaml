@@ -1,0 +1,16 @@
+# Kết nối MQTT của Pi. Mật khẩu KHÔNG để ở đây: điền SAFECAM_MQTT_PASS trong file .env (xem .env.example)
+host: 127.0.0.1 # broker Mosquitto chạy ngay trên Pi
+port: 1883
+username: safecam_pi
+client_id: safecam-pi-cam01
+keepalive: 10 # giây: quá 15 giây không tin thì broker gửi LWT "offline"
+hb_interval_s: 2 # nhịp heartbeat, ESP32 mất 3 nhịp thì báo mất giám sát
+
+#Topic theo docs/mqtt.md
+topics: 
+  state: safecam/cam01/state
+  event: safecam/cam01/event
+  hb: safecam/cam01/hb
+  status: safecam/cam01/status
+  ack: safecam/alarm01/ack
+  
