@@ -80,11 +80,13 @@ Ba quy tắc quan trọng:
 | Ưu tiên | Tình huống | Đèn | Còi |
 | --- | --- | --- | --- |
 | 1 | Đang cảnh báo xâm nhập | Đỏ nháy | Kêu |
-| 2 | ESP32 mất tín hiệu từ Pi | Cam và đỏ xen kẽ | Bíp ngắn |
-| 3 | Cảnh báo quan sát chưa ACK | Cam nháy | Nhịp khác |
+| 2 | ESP32 mất tín hiệu từ Pi | Vàng và đỏ xen kẽ | Bíp ngắn |
+| 3 | Cảnh báo quan sát chưa ACK | Vàng nháy | Nhịp chậm |
 | 4 | Xâm nhập đã ACK, chờ vắng người | Đỏ sáng | Tắt |
-| 5 | Mất quan sát, đã ACK | Cam sáng | Tắt |
-| 6 | Bình thường | Vàng | Tắt |
+| 5 | Mất quan sát, đã ACK | Vàng sáng | Tắt |
+| 6 | Bình thường | Xanh lá | Tắt |
+
+Trạm cảnh báo có 3 đèn (đỏ, vàng, xanh lá) và 4 nút; hiện cả 4 nút cùng là nút xác nhận.
 
 Ảnh bằng chứng chỉ lưu khi có cảnh báo, tự xóa sau N ngày. Log ghi vòng để không làm hỏng thẻ SD.
 
@@ -103,6 +105,7 @@ Broker Mosquitto chạy trên Pi, cổng 1883, bắt buộc có tài khoản (t�
 - ESP32 gửi ACK lặp lại mỗi giây cho tới khi thấy Pi xác nhận đã nhận.
 - ESP32 mất 3 nhịp heartbeat liên tiếp thì báo "mất giám sát".
 - Khi mất kết nối, ESP32 giữ nguyên báo động đang có; nút bấm chỉ tắt còi tại chỗ.
+- Định dạng từng bản tin: `docs/mqtt.md`.
 
 ## 7. Đánh giá
 
