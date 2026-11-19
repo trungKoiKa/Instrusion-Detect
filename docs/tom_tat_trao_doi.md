@@ -23,6 +23,12 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | (17/11) **Laptop mở C270 bằng DSHOW**; video dự phòng làm theo **cách A** (hệ thống chạy thật, quay màn hình + quay ESP32 bằng điện thoại). Tùy chọn `--video` (chạy trên file video, vẫn gửi MQTT tới ESP32) để sau khi lõi đầu-cuối chạy | MSMF treo khi mở C270. Cách A không cần thêm code và thấy cả hệ thống; `--video` là tính năng mới, cần cả nhóm đồng ý. Demo trực tiếp ở phòng bảo vệ chạy `calibrate_zones.py` lại theo phòng đó |
 | (19/11) **Chốt bản tin MQTT** (`docs/mqtt.md`): Pi gửi sẵn `light`/`buzzer` trong `state` (retain), mã sự kiện dạng `I3`/`O1`, ESP32 ACK theo `pending` và ngừng gửi khi thấy mã trong `acked`; trạng thái quan sát `ok`, `suspect`, `lost`, `lost_acked`; còi `on`, `slow`, `off` | Pi giữ trạng thái, ESP32 chỉ làm theo; retain để ESP32 kết nối lại là có trạng thái ngay (K5); mã chữ vì xâm nhập và quan sát đếm số riêng |
 | (19/11) **Đèn theo phần cứng thật** (đỏ, vàng, xanh lá, không có cam): cam → vàng, bình thường → xanh lá. **4 nút hiện cùng chức năng ACK**, đổi sau nếu cần | Bo đã làm có 3 đèn và 4 nút (`hardware/sododaunoi_d.md`). Không thêm tính năng ngoài đề xuất nên các nút chưa có việc riêng |
+| (18/11) **Gán nhãn**: dùng Automatic annotation của CVAT rồi sửa tay từng ảnh; gộp s03, s05, s06 vào một task (CVAT miễn phí chỉ 3 task/tài khoản, tên ảnh giữ tiền tố phiên). **Bỏ 12 ảnh hỏng**: `s02_0189`–`0199` (camera bị cầm lên xoay), `s04_0005` (nhòe). `tools/build_dataset.py` gộp ảnh + nhãn thành `data/dataset.zip` | Tự gán bỏ sót người quay lưng, ở mép, bị nhòe nên phải soát từng ảnh. Camera chạy thật đặt cố định nên ảnh camera bị xoay không giống thực tế. Train 864 ảnh (25 ảnh nền), val 219, test 219 (chưa có s07) |
+| (18/11) **Kết quả fine-tune lần đầu (trên val)**: gốc mAP50 0,995, mAP50-95 0,831; fine-tune 3 seed mAP50-95 0,870 ± 0,006, recall 1,0, seed 2 tốt nhất. Train 0,926 so với val 0,880 nên không overfitting rõ | Val đã bão hòa (gốc đã 0,995) vì mỗi ảnh một người, cao ~85% khung. Kiểm tra dHash: không có ảnh trùng giữa các tập, nhưng s05 cùng phông nền với s04/s06. Val dùng để chọn `best.pt` nên điểm fine-tune trên val hơi cao, kết luận phải lấy từ test |
+| (18/11) **Dời lịch s07; s07 phải là phiên khó thật**: người ở xa nhất, nấp sau bàn ghế, ló nửa người ở mép, cúi/ngồi xổm, 2 người nếu được, 20–30 giây không người, xê dịch đồ và đổi góc camera nhẹ (vẫn góc cửa sổ). Không dùng dữ liệu public làm val; tập test phụ từ COCO chỉ làm khi cả nhóm đồng ý | s07 là chỗ duy nhất còn chứng minh được fine-tune có tác dụng. Val phải cùng camera, cùng phòng vì dùng để chọn `conf`, T, K_min, p |
+| (19/11) **`persistence.py`**: ghi file trạng thái kiểu nguyên tử (file tạm, `fsync`, `os.replace`); khôi phục sự kiện ALARM/ACKED, không khôi phục NGHI NGỜ; giờ bắt đầu sự kiện lấy `time.time()` | K13: mất điện giữa chừng thì còn file cũ nguyên vẹn. K7: khởi động lại vẫn báo tiếp. `time.monotonic()` về 0 khi khởi động lại nên không dùng cho giờ sự kiện |
+| (19/11) **`mqtt_client.py`**: mật khẩu trong `.env` (có `.env.example`, đọc bằng `python-dotenv`); `connect_async` + `loop_start`; ACK đi qua `queue.Queue`; `hb` do vòng lặp chính gọi; kết nối lại thì gửi lại `state` cuối | Mật khẩu không vào git; broker chưa chạy không làm dừng chương trình; hai luồng không cùng sửa trạng thái; YOLO treo thì `hb` ngừng để ESP32 biết; broker mất bản retain thì ESP32 vẫn có trạng thái |
+| (19/11) **Cách làm việc với Claude**: Claude hướng dẫn từng bước (mục tiêu, kiến thức, công cụ, tự kiểm tra) kèm đáp án của bước đó, người dùng tự gõ code, tự commit, tự mở PR; Claude không tự viết code đồ án. Xong mỗi task (một PR) thì tóm tắt rồi sang session mới | Người dùng muốn tự code để hiểu bài. Session ngắn, mỗi task một session thì dễ theo dõi |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
@@ -33,6 +39,11 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 
 ## Còn chờ / việc tiếp theo
 
-- Đo thực tế góc nhìn C270 ở vị trí đặt (phép thử: đứng ở mép gần nhất của khu cấm, xem có thấy cả người không).
-- Bước 1: `pi/safecam/camera.py` + `detector.py`, chạy YOLO11n NCNN imgsz 320 trên Pi, đo FPS 30–60 phút. Mốc 03/11.
-- ESP32 dùng PlatformIO + Arduino + PubSubClient: chờ Thăng chốt.
+Cập nhật 19/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client` (48 test). Còn trống: `outputs`, `main`, `stream`, `observation`.
+
+- **Trung Anh:** `outputs.py` (tính `light`, `buzzer`, `pending` theo bảng ưu tiên trong `docs/mqtt.md`) → `main.py` (ghép camera → YOLO → 4 khu → trạng thái → MQTT, gọi `hb` mỗi 2 giây, lưu trạng thái mỗi lần đổi) → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
+- **Thăng:** firmware ESP32 theo `docs/mqtt.md` (chân trong `hardware/sododaunoi_d.md`, còi active 5 V có diode); `observation.py`; Mosquitto trên Pi (`deploy/`), tạo tài khoản `safecam_pi`.
+- Fine-tune: chạy ô 8 (ảnh so sánh), ô 9 (xuất NCNN từ `ft_seed2`), lưu `ml/notebooks/finetune.ipynb` (xóa output có ảnh người). Lần train sau bật TensorBoard bằng `settings.update({"tensorboard": True})` trong Python trước khi train.
+- Chụp và gán nhãn s07 (phiên khó), chạy lại `build_dataset.py`, rồi chạy `model.val(split="test")` một lần duy nhất cho mô hình gốc và fine-tune.
+- Chưa giải quyết: K4 ("cảnh báo ngay" sau khi bỏ che) mâu thuẫn với cửa sổ T giây; chỉ tiêu độ trễ < 2 giây cần đo khi lõi chạy.
+- Đo thực tế góc nhìn C270 ở vị trí đặt (đứng ở mép gần nhất của khu cấm, xem có thấy cả người không).
