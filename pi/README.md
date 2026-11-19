@@ -11,6 +11,8 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r pi/requirements.txt
 ```
 
+Mật khẩu MQTT: chép `.env.example` (gốc repo) thành `.env`, điền `SAFECAM_MQTT_PASS`. `.env` không lên git.
+
 Phải cài torch bản CPU trước: bản mặc định trên PyPI kéo theo vài GB thư viện CUDA vô dụng trên Pi và làm đầy thẻ 32 GB.
 
 | Module | Việc | Mục đề xuất (bản 12) |

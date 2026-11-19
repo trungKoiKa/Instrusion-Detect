@@ -25,7 +25,7 @@ Pi giữ trạng thái và tính sẵn đèn, còi; ESP32 chỉ làm theo. Riên
 
 | Trường | Giá trị | Ý nghĩa |
 | --- | --- | --- |
-| `seq` | số tăng dần | Bỏ bản tin cũ đến trễ |
+| `seq` | số tăng dần | Bỏ bản tin cũ đến trễ. Pi khởi động lại thì `seq` về 1: ESP32 coi `seq` nhỏ đi là Pi mới chạy lại, không phải bản tin cũ. Mỗi lần kết nối lại Pi gửi lại `state` cuối cùng với `seq` giữ nguyên |
 | `light` | `red_blink`, `red`, `yellow_blink`, `yellow`, `green` | Đèn cần bật |
 | `buzzer` | `on`, `slow`, `off` | Còi: kêu liên tục, bíp nhịp chậm, tắt |
 | `intr.st` | `none`, `suspected`, `alarm`, `acked` | Trùng hằng số trong `pi/safecam/intrusion.py` |

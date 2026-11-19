@@ -3,5 +3,6 @@ opencv-python
 ultralytics
 ncnn
 paho-mqtt
+python-dotenv
 pyyaml
 pytest
