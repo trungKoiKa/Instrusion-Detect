@@ -29,6 +29,10 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | (19/11) **`persistence.py`**: ghi file trạng thái kiểu nguyên tử (file tạm, `fsync`, `os.replace`); khôi phục sự kiện ALARM/ACKED, không khôi phục NGHI NGỜ; giờ bắt đầu sự kiện lấy `time.time()` | K13: mất điện giữa chừng thì còn file cũ nguyên vẹn. K7: khởi động lại vẫn báo tiếp. `time.monotonic()` về 0 khi khởi động lại nên không dùng cho giờ sự kiện |
 | (19/11) **`mqtt_client.py`**: mật khẩu trong `.env` (có `.env.example`, đọc bằng `python-dotenv`); `connect_async` + `loop_start`; ACK đi qua `queue.Queue`; `hb` do vòng lặp chính gọi; kết nối lại thì gửi lại `state` cuối | Mật khẩu không vào git; broker chưa chạy không làm dừng chương trình; hai luồng không cùng sửa trạng thái; YOLO treo thì `hb` ngừng để ESP32 biết; broker mất bản retain thì ESP32 vẫn có trạng thái |
 | (19/11) **Cách làm việc với Claude**: Claude hướng dẫn từng bước (mục tiêu, kiến thức, công cụ, tự kiểm tra) kèm đáp án của bước đó, người dùng tự gõ code, tự commit, tự mở PR; Claude không tự viết code đồ án. Xong mỗi task (một PR) thì tóm tắt rồi sang session mới | Người dùng muốn tự code để hiểu bài. Session ngắn, mỗi task một session thì dễ theo dõi |
+| (20/11) **Trung Anh nhận `observation.py`**; Thăng làm tiếp firmware ESP32 (WiFi, MQTT, đọc `state`, ACK lặp, heartbeat, nhớ ACK khi mất mạng) | Thăng còn nhiều việc firmware; `observation.py` cần xong trước 21–22/11 để kịp thử K1, K4, K12 trước mốc 24/11 |
+| (20/11, chưa chốt) **Cách dùng `observation.py`**: `obs.state` (`ok`, `suspect`, `lost`, `lost_acked`), `obs.event_id` (số sự kiện khi `lost`/`lost_acked`, còn lại `None`), `obs.update(now, ...)` trả `True` khi trạng thái đổi, `obs.ack(ids)` khi bấm nút. 4 hằng `OBS_*` tạm để trong `outputs.py`, viết xong thì chuyển sang `observation.py` | `main.py` viết trước được với một observation giả luôn trả `ok` |
+| (20/11) **Pi ghi vào `acked` mọi mã ESP32 gửi về, kể cả mã cũ**; mỗi lần nhận ACK thì gửi lại `state` dù trạng thái không đổi | ESP32 chỉ ngừng gửi lặp khi thấy mã trong `acked`; nếu Pi bỏ qua mã cũ thì ESP32 gửi mãi |
+| (20/11) **`after_blind` (K4, xâm nhập sau mất quan sát) do `main.py` quyết định** | Trạng thái xâm nhập và quan sát độc lập, chỉ `main.py` thấy được cả hai. K4 vẫn chưa giải quyết |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
@@ -39,10 +43,10 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 
 ## Còn chờ / việc tiếp theo
 
-Cập nhật 19/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client` (48 test). Còn trống: `outputs`, `main`, `stream`, `observation`.
+Cập nhật 20/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client`, `outputs` (62 test). Còn trống: `main`, `observation`, `stream`. Firmware: PR #30, #31 đã merge (đèn, còi không chặn, kiểu mất tín hiệu Pi; mới nhận lệnh gõ qua Serial).
 
-- **Trung Anh:** `outputs.py` (tính `light`, `buzzer`, `pending` theo bảng ưu tiên trong `docs/mqtt.md`) → `main.py` (ghép camera → YOLO → 4 khu → trạng thái → MQTT, gọi `hb` mỗi 2 giây, lưu trạng thái mỗi lần đổi) → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
-- **Thăng:** firmware ESP32 theo `docs/mqtt.md` (chân trong `hardware/sododaunoi_d.md`, còi active 5 V có diode); `observation.py`; Mosquitto trên Pi (`deploy/`), tạo tài khoản `safecam_pi`.
+- **Trung Anh:** `main.py` (ghép camera → YOLO → 4 khu → trạng thái → MQTT, gọi `hb` mỗi 2 giây, lưu trạng thái mỗi lần đổi, tạm dùng observation giả luôn `ok`; thử bằng MQTTX, không chờ firmware) → `observation.py` (trước 21–22/11) → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
+- **Thăng:** firmware trên nhánh mới từ `main`: WiFi + MQTT, đọc `state`, nút gửi ACK lặp mỗi giây, mất 3 nhịp `hb` thì báo mất tín hiệu, nhớ ACK khi mất mạng rồi gửi lại (K5); Mosquitto trên Pi (`deploy/`), tạo tài khoản `safecam_pi`.
 - Fine-tune: chạy ô 8 (ảnh so sánh), ô 9 (xuất NCNN từ `ft_seed2`), lưu `ml/notebooks/finetune.ipynb` (xóa output có ảnh người). Lần train sau bật TensorBoard bằng `settings.update({"tensorboard": True})` trong Python trước khi train.
 - Chụp và gán nhãn s07 (phiên khó), chạy lại `build_dataset.py`, rồi chạy `model.val(split="test")` một lần duy nhất cho mô hình gốc và fine-tune.
 - Chưa giải quyết: K4 ("cảnh báo ngay" sau khi bỏ che) mâu thuẫn với cửa sổ T giây; chỉ tiêu độ trễ < 2 giây cần đo khi lõi chạy.
