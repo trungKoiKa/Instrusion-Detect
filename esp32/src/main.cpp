@@ -187,9 +187,9 @@ void reportWifi()
     bool up = WiFi.status() == WL_CONNECTED;
     if (up != lastUp)
     {
-        if(up)
+        if (up)
             Serial.printf("WiFi OK, IP: %s\n",
-            WiFi.localIp().toString().c_str());
+            WiFi.localIP().toString().c_str());
         else
             Serial.println("Mat WiFi");
         lastUp = up;
