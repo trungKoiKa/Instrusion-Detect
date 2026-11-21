@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <vector>
 #include "pins.h"
 #include "secrets.h"
 
@@ -38,8 +39,11 @@ const char *CLIENT_ID = "safecam-alarm01";
 const char *TOPIC_STATUS = "safecam/alarm01/status";
 const char *TOPIC_STATE = "safecam/cam01/state";
 const char *TOPIC_HB = "safecam/cam01/hb";
+const char *TOPIC_ACK = "safecam/alarm01/ack";
 const uint32_t RECONNECT_MS = 5000;  // thu ket noi lai broker moi 5s
 const uint32_t HB_TIMEOUT_MS = 6000; // mat 3 nhip hb (2 s/nhip) thi coi la mat Pi
+const uint32_t ACK_RESEND_MS = 1000; // gui lai ACK moi 1 s toi khi Pi xac nhan
+const uint32_t DEBOUNCE_MS = 50;     // chong doi nut
 
 WiFiClient net;
 PubSubClient mqtt(net);
@@ -51,6 +55,20 @@ Buzzer piBuzzer = Buzzer::OFF;
 bool gotHb = false;    // da nhan it nhat 1 nhip hb chua
 uint32_t lastHbMs = 0; // luc nhan nhip hb gan nhat
 
+std::vector<String> pending; // ma Pi dang cho ACK (tu state gan nhat)
+std::vector<String> ackIds;  // ma da bam nut, cho Pi xac nhan
+bool localMute = false;      // da bam nut: tat coi tai cho
+uint32_t lastAckSendMs = 0;
+
+bool contains(const std::vector<String> &v, const String &s)
+{
+    for (const String &x : v)
+    {
+        if (x == s)
+            return true;
+    }
+    return false;
+}
 // Doc chuoi light cua Pi; chuoi la tra ve false de giu nguyen den cu
 bool parseLight(const String &s, Light &out)
 {
@@ -179,8 +197,37 @@ void handleState(const byte *payload, unsigned int len)
     }
     piLight = l; // chi ghi dieu Pi muon; decideOutputs() moi bat den
     piBuzzer = b;
-    Serial.printf("state seq=%d light=%s buzzer=%s\n",
-                  doc["seq"] | 0, lightStr.c_str(), buzzerStr.c_str());
+
+    pending.clear();
+    for (JsonVariantConst v : doc["pending"].as<JsonArrayConst>())
+        pending.push_back(v.as<String>());
+
+    // Pi da nhan ACK: bo cac ma co trong "acked" khoi danh sach gui lap
+    for (JsonVariantConst v : doc["acked"].as<JsonArrayConst>())
+    {
+        String id = v.as<String>();
+        for (size_t i = 0; i < ackIds.size(); i++)
+        {
+            if (ackIds[i] == id)
+            {
+                ackIds.erase(ackIds.begin() + i);
+                break;
+            }
+        }
+    }
+
+    // Co su kien moi chua bam nut thi bo tat coi, de coi keu lai
+    for (const String &p : pending)
+    {
+        if (!contains(ackIds, p))
+            localMute = false;
+    }
+    if (pending.empty() && ackIds.empty())
+        localMute = false;
+
+    Serial.printf("state seq=%d light=%s buzzer=%s pending=%u cho_xac_nhan=%u\n",
+                  doc["seq"] | 0, lightStr.c_str(), buzzerStr.c_str(),
+                  (unsigned)pending.size(), (unsigned)ackIds.size());
 }
 
 // Thu vien goi ham nay trong mqtt.loop() moi khi co ban tin
@@ -194,6 +241,55 @@ void onMessage(char *topic, byte *payload, unsigned int len)
     }
     if (strcmp(topic, TOPIC_STATE) == 0)
         handleState(payload, len);
+}
+// Bam nut: tat coi tai cho, nho cac ma dang hien de gui ACK
+void onButton()
+{
+    localMute = true; // ke ca khi mat mang (K5)
+    for (const String &p : pending)
+    {
+        if (!contains(ackIds, p))
+            ackIds.push_back(p); // chi xac nhan nhung gi dang hien luc bam
+    }
+    lastAckSendMs = 0; // gui ngay o vong sau, khong cho 1 giay
+    Serial.printf("Bam nut: %u ma cho gui\n", (unsigned)ackIds.size());
+}
+
+// Ca 4 nut cung la ACK (docs/mqtt.md). Nut tich cuc muc thap
+void handleButtons()
+{
+    static bool lastPressed = false;
+    static uint32_t lastChangeMs = 0;
+    bool pressed = digitalRead(BTN_ACK) == LOW || digitalRead(BTN_MUTE) == LOW ||
+                   digitalRead(BTN_NEXT) == LOW || digitalRead(BTN_TEST) == LOW;
+    uint32_t now = millis();
+    if (pressed != lastPressed && now - lastChangeMs > DEBOUNCE_MS)
+    {
+        lastChangeMs = now;
+        lastPressed = pressed;
+        if (pressed)
+            onButton(); // chi tinh luc vua nhan xuong
+    }
+}
+
+// Gui ACK moi giay toi khi thay ma trong "acked" cua state
+void sendAcks()
+{
+    if (ackIds.empty() || !mqtt.connected())
+        return; // mat mang: giu ackIds, co mang lai thi gui (K5)
+    uint32_t now = millis();
+    if (lastAckSendMs != 0 && now - lastAckSendMs < ACK_RESEND_MS)
+        return;
+    lastAckSendMs = now;
+
+    JsonDocument doc;
+    JsonArray ids = doc["ids"].to<JsonArray>();
+    for (const String &id : ackIds)
+        ids.add(id);
+    char buf[256];
+    size_t n = serializeJson(doc, buf, sizeof(buf));
+    mqtt.publish(TOPIC_ACK, (const uint8_t *)buf, n, false);
+    Serial.printf("Gui ACK: %s\n", buf);
 }
 
 // In 1 lan moi khi WiFi doi trang thai
@@ -266,6 +362,8 @@ void decideOutputs()
         currentLight = Light::LINK_LOST; // do vang xen ke
         currentBuzzer = Buzzer::SHORT_BEEP;
     }
+    if (localMute)
+        currentBuzzer = Buzzer::OFF; // da bam nut: chi tat coi, den giu nguyen
 }
 
 void setup()
@@ -289,7 +387,7 @@ void setup()
     mqtt.setKeepAlive(10); // broker ~15 s khong nghe thay thi gui LWT "offline"
     mqtt.setCallback(onMessage);
     mqtt.setBufferSize(512); // mac dinh 256 byte: state dai hon bi bo ma khong bao loi
-    Serial.println("alarm01: buoc 5 - hb, mat tin hieu Pi");
+    Serial.println("alarm01: buoc 6 - nut ACK");
 }
 
 void loop()
@@ -297,6 +395,8 @@ void loop()
     reportWifi();
     connectMqtt();
     mqtt.loop();     // giu ket noi, nhan ban tin
+    handleButtons(); // bam nut -> tat coi, nho ma can ACK
+    sendAcks();      // gui lap ACK moi giay
     decideOutputs(); // chon den/coi: theo Pi hay "mat Pi"
     updateOutputs(); // khong con delay
 }
