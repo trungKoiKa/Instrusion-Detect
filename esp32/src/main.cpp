@@ -37,11 +37,19 @@ const uint32_t SHORT_ON_MS = 80;
 const char *CLIENT_ID = "safecam-alarm01";
 const char *TOPIC_STATUS = "safecam/alarm01/status";
 const char *TOPIC_STATE = "safecam/cam01/state";
-const uint32_t RECONNECT_MS = 5000; // thu ket noi lai broker moi 5s
+const char *TOPIC_HB = "safecam/cam01/hb";
+const uint32_t RECONNECT_MS = 5000;  // thu ket noi lai broker moi 5s
+const uint32_t HB_TIMEOUT_MS = 6000; // mat 3 nhip hb (2 s/nhip) thi coi la mat Pi
 
 WiFiClient net;
 PubSubClient mqtt(net);
 uint32_t lastReconnectMs = 0;
+
+// Dieu Pi yeu cau (doc tu state). Den/coi that su do decideOutputs() chon
+Light piLight = Light::GREEN;
+Buzzer piBuzzer = Buzzer::OFF;
+bool gotHb = false;    // da nhan it nhat 1 nhip hb chua
+uint32_t lastHbMs = 0; // luc nhan nhip hb gan nhat
 
 // Doc chuoi light cua Pi; chuoi la tra ve false de giu nguyen den cu
 bool parseLight(const String &s, Light &out)
@@ -169,8 +177,8 @@ void handleState(const byte *payload, unsigned int len)
         Serial.printf("state la: light=%s buzzer=%s\n", lightStr.c_str(), buzzerStr.c_str());
         return; // giu nguyen den cu
     }
-    currentLight = l;
-    currentBuzzer = b;
+    piLight = l; // chi ghi dieu Pi muon; decideOutputs() moi bat den
+    piBuzzer = b;
     Serial.printf("state seq=%d light=%s buzzer=%s\n",
                   doc["seq"] | 0, lightStr.c_str(), buzzerStr.c_str());
 }
@@ -178,6 +186,12 @@ void handleState(const byte *payload, unsigned int len)
 // Thu vien goi ham nay trong mqtt.loop() moi khi co ban tin
 void onMessage(char *topic, byte *payload, unsigned int len)
 {
+    if (strcmp(topic, TOPIC_HB) == 0)
+    {
+        gotHb = true; // khong can doc noi dung, chi can biet Pi con song
+        lastHbMs = millis();
+        return;
+    }
     if (strcmp(topic, TOPIC_STATE) == 0)
         handleState(payload, len);
 }
@@ -215,11 +229,42 @@ void connectMqtt()
         Serial.println("OK");
         mqtt.publish(TOPIC_STATUS, "online", true); // retain
         mqtt.subscribe(TOPIC_STATE, 1);             // state co retain: dang ky xong la nhan ngay
+        mqtt.subscribe(TOPIC_HB, 0);                // hb QoS 0: mat 1 nhip cung khong sao
     }
     else
     {
         // -2: khong toi duoc broker; 4: sai tai khoan/mat khau; 5: khong co quyen
         Serial.printf("loi rc=%d\n", mqtt.state());
+    }
+}
+
+// Chon den/coi that su bat: theo Pi, hay kieu "mat Pi"
+void decideOutputs()
+{
+    static bool lastLinkOk = true; // de lan dau in "MAT TIN HIEU PI" neu chua co hb
+    uint32_t now = millis();
+    bool linkOk = mqtt.connected() && gotHb && (now - lastHbMs < HB_TIMEOUT_MS);
+    if (linkOk != lastLinkOk)
+    {
+        Serial.println(linkOk ? "Nghe duoc Pi" : "MAT TIN HIEU PI");
+        lastLinkOk = linkOk;
+    }
+
+    if (linkOk)
+    {
+        currentLight = piLight;
+        currentBuzzer = piBuzzer;
+    }
+    else if (piLight == Light::RED_BLINK)
+    {
+        // Uu tien 1 tren 2: dang canh bao xam nhap thi giu do nhay va coi
+        currentLight = Light::RED_BLINK;
+        currentBuzzer = Buzzer::ON;
+    }
+    else
+    {
+        currentLight = Light::LINK_LOST; // do vang xen ke
+        currentBuzzer = Buzzer::SHORT_BEEP;
     }
 }
 
@@ -244,7 +289,7 @@ void setup()
     mqtt.setKeepAlive(10); // broker ~15 s khong nghe thay thi gui LWT "offline"
     mqtt.setCallback(onMessage);
     mqtt.setBufferSize(512); // mac dinh 256 byte: state dai hon bi bo ma khong bao loi
-    Serial.println("alarm01: buoc 4 - nhan state");
+    Serial.println("alarm01: buoc 5 - hb, mat tin hieu Pi");
 }
 
 void loop()
@@ -252,5 +297,6 @@ void loop()
     reportWifi();
     connectMqtt();
     mqtt.loop();     // giu ket noi, nhan ban tin
+    decideOutputs(); // chon den/coi: theo Pi hay "mat Pi"
     updateOutputs(); // khong con delay
 }
