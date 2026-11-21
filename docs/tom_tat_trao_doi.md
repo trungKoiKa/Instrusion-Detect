@@ -43,9 +43,9 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 
 ## Còn chờ / việc tiếp theo
 
-Cập nhật 20/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client`, `outputs` (62 test). Còn trống: `main`, `observation`, `stream`. Firmware: PR #30, #31 đã merge (đèn, còi không chặn, kiểu mất tín hiệu Pi; mới nhận lệnh gõ qua Serial).
+Cập nhật 21/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client`, `outputs` (62 test), `main` (PR #33, đang dùng observation giả luôn `ok`). Còn trống: `observation`, `stream`. Firmware: PR #30, #31 đã merge (đèn, còi không chặn, kiểu mất tín hiệu Pi; mới nhận lệnh gõ qua Serial).
 
-- **Trung Anh:** `main.py` (ghép camera → YOLO → 4 khu → trạng thái → MQTT, gọi `hb` mỗi 2 giây, lưu trạng thái mỗi lần đổi, tạm dùng observation giả luôn `ok`; thử bằng MQTTX, không chờ firmware) → `observation.py` (trước 21–22/11) → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
+- **Trung Anh:** `observation.py` (trước 21–22/11) → đưa `main.py` lên Pi chạy với broker thật → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
 - **Thăng:** firmware trên nhánh mới từ `main`: WiFi + MQTT, đọc `state`, nút gửi ACK lặp mỗi giây, mất 3 nhịp `hb` thì báo mất tín hiệu, nhớ ACK khi mất mạng rồi gửi lại (K5); Mosquitto trên Pi (`deploy/`), tạo tài khoản `safecam_pi`.
 - Fine-tune: chạy ô 8 (ảnh so sánh), ô 9 (xuất NCNN từ `ft_seed2`), lưu `ml/notebooks/finetune.ipynb` (xóa output có ảnh người). Lần train sau bật TensorBoard bằng `settings.update({"tensorboard": True})` trong Python trước khi train.
 - Chụp và gán nhãn s07 (phiên khó), chạy lại `build_dataset.py`, rồi chạy `model.val(split="test")` một lần duy nhất cho mô hình gốc và fine-tune.
