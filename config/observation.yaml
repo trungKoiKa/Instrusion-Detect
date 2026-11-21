@@ -1,0 +1,3 @@
+# Giám sát camera, Số đo trên laptop 21/11, đo lại trên Pi ở góc cửa sổ
+detail_min: 25 # độ chi tiết ảnh dưới mức này là bị che (tay che 3-14, người đứng sát 19-51, tắt bớt đèn >=47)
+lost_after_s: 5 # lỗi kéo dài chừng này mới cảnh báo; lúc mở camera mất ~3.5 giây
