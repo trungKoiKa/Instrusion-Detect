@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include "pins.h"
 #include "secrets.h"
-
 
 // Kieu den va coi (docs/mqtt.md). LINK_LOST VA SHORT_BEEP do ESP32 tu bat khi mat Pi
 enum class Light
@@ -35,7 +35,8 @@ const uint32_t SHORT_ON_MS = 80;
 
 //----------------MQTT (docs/mqtt.md)--------------
 const char *CLIENT_ID = "safecam-alarm01";
-const char *TOPIC_STATUS =  "safecam/alarm01/status";
+const char *TOPIC_STATUS = "safecam/alarm01/status";
+const char *TOPIC_STATE = "safecam/cam01/state";
 const uint32_t RECONNECT_MS = 5000; // thu ket noi lai broker moi 5s
 
 WiFiClient net;
@@ -149,35 +150,36 @@ void updateOutputs()
     digitalWrite(BUZZER, buzz ? HIGH : LOW);
 }
 
-// Buoc 2: go chuoi vao Serial de thu: buoc 4 thay bang ban tin state
-void handleSerialTest()
+// Doc ban tin state cua Pi, bat den/coi theo "light", "buzzer"
+void handleState(const byte *payload, unsigned int len)
 {
-    if (!Serial.available())
-        return;
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim(); // bo dau \r, dau cach thua
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, payload, len);
+    if (err)
+    {
+        Serial.printf("state hong: %s\n", err.c_str());
+        return; // giu nguyen den cu
+    }
+    String lightStr = doc["light"] | "";
+    String buzzerStr = doc["buzzer"] | "";
+    Light l;
+    Buzzer b;
+    if (!parseLight(lightStr, l) || !parseBuzzer(buzzerStr, b))
+    {
+        Serial.printf("state la: light=%s buzzer=%s\n", lightStr.c_str(), buzzerStr.c_str());
+        return; // giu nguyen den cu
+    }
+    currentLight = l;
+    currentBuzzer = b;
+    Serial.printf("state seq=%d light=%s buzzer=%s\n",
+                  doc["seq"] | 0, lightStr.c_str(), buzzerStr.c_str());
+}
 
-    Light newLight;
-    Buzzer newBuzzer;
-    if (parseLight(cmd, newLight))
-    {
-        currentLight = newLight;
-    }
-    else if (parseBuzzer(cmd, newBuzzer))
-    {
-        currentBuzzer = newBuzzer;
-    }
-    else if (cmd == "lost")
-    {
-        currentLight = Light::LINK_LOST;
-        currentBuzzer = Buzzer::SHORT_BEEP;
-    }
-    else
-    {
-        Serial.printf("khong hieu: %s\n", cmd.c_str());
-        return;
-    }
-    Serial.printf("OK: %s\n", cmd.c_str());
+// Thu vien goi ham nay trong mqtt.loop() moi khi co ban tin
+void onMessage(char *topic, byte *payload, unsigned int len)
+{
+    if (strcmp(topic, TOPIC_STATE) == 0)
+        handleState(payload, len);
 }
 
 // In 1 lan moi khi WiFi doi trang thai
@@ -189,7 +191,7 @@ void reportWifi()
     {
         if (up)
             Serial.printf("WiFi OK, IP: %s\n",
-            WiFi.localIP().toString().c_str());
+                          WiFi.localIP().toString().c_str());
         else
             Serial.println("Mat WiFi");
         lastUp = up;
@@ -199,21 +201,23 @@ void reportWifi()
 // Goi moi vong loop: chua ket noi thi 5s thu 1 lan, khong chan
 void connectMqtt()
 {
-    if(WiFi.status() != WL_CONNECTED || mqtt.connected())
+    if (WiFi.status() != WL_CONNECTED || mqtt.connected())
         return;
     uint32_t now = millis();
-    if(lastReconnectMs != 0 && now - lastReconnectMs < RECONNECT_MS)
+    if (lastReconnectMs != 0 && now - lastReconnectMs < RECONNECT_MS)
         return;
     lastReconnectMs = now;
 
     Serial.print("MQTT dang ket noi...");
     // Di chuc (LWT): ESP32 rot dot ngot thi broker tu gui "offline" (QoS 1, retain)
-    if(mqtt.connect(CLIENT_ID, MQTT_USER, MQTT_PASS, TOPIC_STATUS, 1, true, "offline"))
+    if (mqtt.connect(CLIENT_ID, MQTT_USER, MQTT_PASS, TOPIC_STATUS, 1, true, "offline"))
     {
         Serial.println("OK");
-        mqtt.publish(TOPIC_STATUS, "online", true); //retain
+        mqtt.publish(TOPIC_STATUS, "online", true); // retain
+        mqtt.subscribe(TOPIC_STATE, 1);             // state co retain: dang ky xong la nhan ngay
     }
-    else{
+    else
+    {
         // -2: khong toi duoc broker; 4: sai tai khoan/mat khau; 5: khong co quyen
         Serial.printf("loi rc=%d\n", mqtt.state());
     }
@@ -238,14 +242,15 @@ void setup()
 
     mqtt.setServer(MQTT_HOST, MQTT_PORT);
     mqtt.setKeepAlive(10); // broker ~15 s khong nghe thay thi gui LWT "offline"
-    Serial.println("alarm01: buoc 3 - WiFi + MQTT");
+    mqtt.setCallback(onMessage);
+    mqtt.setBufferSize(512); // mac dinh 256 byte: state dai hon bi bo ma khong bao loi
+    Serial.println("alarm01: buoc 4 - nhan state");
 }
 
 void loop()
 {
     reportWifi();
     connectMqtt();
-    mqtt.loop(); // giu ket noi, nhan ban tin
-    handleSerialTest();
+    mqtt.loop();     // giu ket noi, nhan ban tin
     updateOutputs(); // khong con delay
 }
