@@ -8,7 +8,7 @@ from .config import load_config
 from .detector import PersonDetector
 from .intrusion import Intrusion
 from .mqtt_client import MqttClient
-from .outputs import OBS_OK, RecentAcks, build_state, intrusion_event_msg
+from .outputs import OBS_OK, RecentAcks, build_state, intrusion_event_msg, split_ack_ids
 from .persistence import intrusion_from_dict, intrusion_to_dict , load_state, save_state
 from .zones import ZoneMonitor
 
@@ -76,6 +76,16 @@ def main():
                     send_state()
                     zs = sorted(intr.event.zones) if intr.event else []
                     print("Xâm nhập:", intr.state, "khu", zs)
+
+                acks = mqtt.get_acks() # mã ESP32 gửi từ lượt trước, có thể rỗng
+                if acks:
+                    recent.add(acks) # ghi cả mã cũ để ESP32 ngừng gửi lặp
+                    intr_ids, obs_ids = split_ack_ids(acks)
+                    if intr.ack(intr_ids):
+                        save_state(STATE_PATH, intrusion_to_dict(intr))
+                    obs.ack(obs_ids)
+                    send_state() # luôn gửi, kể cả khi không có gì đổi
+                    print("ACK:", sorted(acks),"->", intr.state)
 
     except KeyboardInterrupt:
         print("Đang tắt...")
