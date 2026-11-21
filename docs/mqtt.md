@@ -9,7 +9,7 @@ Pi giữ trạng thái và tính sẵn đèn, còi; ESP32 chỉ làm theo. Riên
 | `safecam/cam01/state` | Pi → ESP32 | 1 | Có | Mỗi khi trạng thái đổi và ngay sau khi kết nối |
 | `safecam/cam01/event` | Pi → ESP32 | 1 | Không | Mở sự kiện mới |
 | `safecam/cam01/hb` | Pi → ESP32 | 0 | Không | Mỗi 2 giây |
-| `safecam/alarm01/ack` | ESP32 → Pi | 1 | Không | Bấm nút, gửi lại mỗi giây tới khi Pi xác nhận |
+| `safecam/alarm01/ack` | ESP32 → Pi | 0 | Không | Bấm nút, gửi lại mỗi giây tới khi Pi xác nhận (PubSubClient chỉ gửi được QoS 0, gửi lặp bù cho việc mất bản tin) |
 | `safecam/cam01/status`, `safecam/alarm01/status` | LWT | 1 | Có | `"online"` khi kết nối; broker gửi `"offline"` khi rớt |
 
 ## Payload (JSON)
