@@ -1,5 +1,9 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 #include "pins.h"
+#include "secrets.h"
+
 
 // Kieu den va coi (docs/mqtt.md). LINK_LOST VA SHORT_BEEP do ESP32 tu bat khi mat Pi
 enum class Light
@@ -28,6 +32,15 @@ const uint32_t SLOW_PERIOD_MS = 2000; // coi "slow": bip 200ms moi 2s
 const uint32_t SLOW_ON_MS = 200;
 const uint32_t SHORT_PERIOD_MS = 1000; // bip ngan khi mat Pi: 80 ms moi 1s
 const uint32_t SHORT_ON_MS = 80;
+
+//----------------MQTT (docs/mqtt.md)--------------
+const char *CLIENT_ID = "safecam-alarm01";
+const char *TOPIC_STATUS =  "safecam/alarm01/status";
+const uint32_t RECONNECT_MS = 5000; // thu ket noi lai broker moi 5s
+
+WiFiClient net;
+PubSubClient mqtt(net);
+uint32_t lastReconnectMs = 0;
 
 // Doc chuoi light cua Pi; chuoi la tra ve false de giu nguyen den cu
 bool parseLight(const String &s, Light &out)
@@ -167,6 +180,45 @@ void handleSerialTest()
     Serial.printf("OK: %s\n", cmd.c_str());
 }
 
+// In 1 lan moi khi WiFi doi trang thai
+void reportWifi()
+{
+    static bool lastUp = false;
+    bool up = WiFi.status() == WL_CONNECTED;
+    if (up != lastUp)
+    {
+        if(up)
+            Serial.printf("WiFi OK, IP: %s\n",
+            WiFi.localIp().toString().c_str());
+        else
+            Serial.println("Mat WiFi");
+        lastUp = up;
+    }
+}
+
+// Goi moi vong loop: chua ket noi thi 5s thu 1 lan, khong chan
+void connectMqtt()
+{
+    if(WiFi.status() != WL_CONNECTED || mqtt.connected())
+        return;
+    uint32_t now = millis();
+    if(lastReconnectMs != 0 && now - lastReconnectMs < RECONNECT_MS)
+        return;
+    lastReconnectMs = now;
+
+    Serial.print("MQTT dang ket noi...");
+    // Di chuc (LWT): ESP32 rot dot ngot thi broker tu gui "offline" (QoS 1, retain)
+    if(mqtt.connect(CLIENT_ID, MQTT_USER, MQTT_PASS, TOPIC_STATUS, 1, true, "offline"))
+    {
+        Serial.println("OK");
+        mqtt.publish(TOPIC_STATUS, "online", true); //retain
+    }
+    else{
+        // -2: khong toi duoc broker; 4: sai tai khoan/mat khau; 5: khong co quyen
+        Serial.printf("loi rc=%d\n", mqtt.state());
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -179,10 +231,21 @@ void setup()
     pinMode(LED_GREEN, OUTPUT);
     pinMode(BUZZER, OUTPUT);
     digitalWrite(BUZZER, LOW);
-    Serial.print("alarmO1: buoc 2 - go light/buzzer de thu");
+
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true); // router bat lai thi tu noi lai
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+    mqtt.setServer(MQTT_HOST, MQTT_PORT);
+    mqtt.setKeepAlive(10); // broker ~15 s khong nghe thay thi gui LWT "offline"
+    Serial.println("alarm01: buoc 3 - WiFi + MQTT");
 }
+
 void loop()
 {
+    reportWifi();
+    connectMqtt();
+    mqtt.loop(); // giu ket noi, nhan ban tin
     handleSerialTest();
     updateOutputs(); // khong con delay
 }
