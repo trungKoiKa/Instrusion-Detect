@@ -1,6 +1,8 @@
 """Vòng lặp chính: camera -> YOLO -> 4 KHU -> trạng thái -> MQTT."""
 from pathlib import Path
-
+import sys
+import time
+from pathlib import Path
 from .camera import Camera
 from .config import load_config
 from .detector import PersonDetector
@@ -30,6 +32,9 @@ def main():
     zone_cfg = load_config("zones")
     mqtt_cfg = load_config("mqtt")
 
+    if sys.platform == "win32":
+        cam_cfg["device"] = 1 # laptop: số camera thay cho đường dẫn của Pi
+
     # Kiểm tra cấu hình khu trước: sai thì dừng ngay, không phải chờ nạp mô hình
     zones = ZoneMonitor.from_config(zone_cfg, det_cfg)
 
@@ -43,6 +48,25 @@ def main():
     camera.start()
     mqtt.start()
     print("Sẵn sàng, Trạng thái xâm nhập: ", intr.state)
+
+    last_seq = 0
+    try:
+        while True:
+            frame = camera.get_latest(last_seq) # chờ tối đa 2 giây
+            mono = time.monotonic() # đồn hồ bấm giờ: cho cửa sổ T giây
+            wall = time.time() # đồng hồ treo tường: cho giờ sự kiện
+            if frame is not None:
+                last_seq, img = frame
+                zones.add_frame(mono, detector.detect(img))
+                # không có ảnh: không ghi gì vào cửa sổ, vẫn xét tiếp (zones tự ra unkown)
+                if intr.update(wall, zones.verdicts(mono)):
+                    zs = sorted(intr.event.zones) if intr.event else []
+                    print("Xâm nhập: ", intr.state, "khu", zs)
+    except KeyboardInterrupt:
+        print("Đang tắt...")
+    finally:
+        camera.stop()
+        mqtt.stop() 
 
 if __name__ == "__main__":
     main()
