@@ -8,8 +8,8 @@ from .config import load_config
 from .detector import PersonDetector
 from .intrusion import Intrusion
 from .mqtt_client import MqttClient
-from .outputs import OBS_OK
-from .persistence import intrusion_from_dict, load_state
+from .outputs import OBS_OK, RecentAcks, build_state, intrusion_event_msg
+from .persistence import intrusion_from_dict, intrusion_to_dict , load_state, save_state
 from .zones import ZoneMonitor
 
 ROOT = Path(__file__).resolve().parents[2] #goc repo
@@ -47,6 +47,13 @@ def main():
     mqtt = MqttClient(mqtt_cfg)
     camera.start()
     mqtt.start()
+
+    recent = RecentAcks() # Các mã vừa ACK, gửi trong trường "acked"
+
+    def send_state():
+        mqtt.publish_state(build_state(intr, obs.state, obs.event_id, recent.as_list()))
+
+    send_state() # ESP32 có trạng thái ngay, kể cả sự kiện vừa khôi phục (K7)
     print("Sẵn sàng, Trạng thái xâm nhập: ", intr.state)
 
     last_seq = 0
@@ -59,9 +66,17 @@ def main():
                 last_seq, img = frame
                 zones.add_frame(mono, detector.detect(img))
                 # không có ảnh: không ghi gì vào cửa sổ, vẫn xét tiếp (zones tự ra unkown)
+                
+                old_id = intr.event.id if intr.event else None
                 if intr.update(wall, zones.verdicts(mono)):
+                    save_state(STATE_PATH, intrusion_to_dict(intr)) #ghi sổ trước, gửi sau
+
+                    if intr.event and intr.event.id != old_id: # vừa mở sự kiện mới
+                        mqtt.publish_event(intrusion_event_msg(intr.event))
+                    send_state()
                     zs = sorted(intr.event.zones) if intr.event else []
-                    print("Xâm nhập: ", intr.state, "khu", zs)
+                    print("Xâm nhập:", intr.state, "khu", zs)
+
     except KeyboardInterrupt:
         print("Đang tắt...")
     finally:
