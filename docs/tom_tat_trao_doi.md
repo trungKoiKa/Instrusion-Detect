@@ -33,6 +33,7 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | (20/11, chưa chốt) **Cách dùng `observation.py`**: `obs.state` (`ok`, `suspect`, `lost`, `lost_acked`), `obs.event_id` (số sự kiện khi `lost`/`lost_acked`, còn lại `None`), `obs.update(now, ...)` trả `True` khi trạng thái đổi, `obs.ack(ids)` khi bấm nút. 4 hằng `OBS_*` tạm để trong `outputs.py`, viết xong thì chuyển sang `observation.py` | `main.py` viết trước được với một observation giả luôn trả `ok` |
 | (20/11) **Pi ghi vào `acked` mọi mã ESP32 gửi về, kể cả mã cũ**; mỗi lần nhận ACK thì gửi lại `state` dù trạng thái không đổi | ESP32 chỉ ngừng gửi lặp khi thấy mã trong `acked`; nếu Pi bỏ qua mã cũ thì ESP32 gửi mãi |
 | (20/11) **`after_blind` (K4, xâm nhập sau mất quan sát) do `main.py` quyết định** | Trạng thái xâm nhập và quan sát độc lập, chỉ `main.py` thấy được cả hai. K4 vẫn chưa giải quyết |
+| (21/11) **`observation.py`** (PR #35): `obs.update(now, good)` với `good` do `main.py` tính; ảnh bị che khi độ chi tiết (độ lệch chuẩn trên ảnh xám thu nhỏ 64×48) < 25; lỗi kéo dài 5 giây mới `lost`; ảnh bị che không vào cửa sổ khu; chỉ tin `EMPTY` khi camera nhìn tốt liên tục đủ T giây; Pi quá chậm (cửa sổ `UNKNOWN`) cũng là lỗi quan sát; `after_blind = True` khi mở sự kiện lúc `obs` không phải `ok`. Ngưỡng trong `config/observation.yaml` | Đo trên laptop bằng `tools/measure_detail.py`: tay che 3–14, người đứng sát 19–51, tắt bớt đèn ≥ 47, phòng bình thường ~74. Lúc mở camera mất ~3,5 giây không nhìn được nên chọn 5 giây. Ảnh che dở vẫn > 25 làm K1 hỏng ở lần thử đầu nên thêm luật "nhìn tốt liên tục T giây". Giới hạn: che một phần hoặc vật che mỏng có thể lọt; người đứng sát có thể báo mất quan sát; người đã ở trong khu lúc khởi động mang nhãn `after_blind` |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
@@ -43,12 +44,14 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 
 ## Còn chờ / việc tiếp theo
 
-Cập nhật 21/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client`, `outputs` (62 test), `main` (PR #33, đang dùng observation giả luôn `ok`). Còn trống: `observation`, `stream`. Firmware: PR #30, #31 đã merge (đèn, còi không chặn, kiểu mất tín hiệu Pi; mới nhận lệnh gõ qua Serial).
+Cập nhật 21/11. Đã xong trên Pi: `camera`, `detector`, `zones`, `intrusion`, `persistence`, `mqtt_client`, `outputs`, `main` (PR #33), `observation` (PR #35), 75 test. Còn trống: `stream`. Firmware: PR #30, #31 đã merge (đèn, còi không chặn, kiểu mất tín hiệu Pi; mới nhận lệnh gõ qua Serial).
 
-- **Trung Anh:** `observation.py` (trước 21–22/11) → đưa `main.py` lên Pi chạy với broker thật → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
+- **Trung Anh:** đưa `main.py` lên Pi chạy với broker thật → lõi đầu-cuối với ESP32 (mốc 10/11 đã trễ).
 - **Thăng:** firmware trên nhánh mới từ `main`: WiFi + MQTT, đọc `state`, nút gửi ACK lặp mỗi giây, mất 3 nhịp `hb` thì báo mất tín hiệu, nhớ ACK khi mất mạng rồi gửi lại (K5); Mosquitto trên Pi (`deploy/`), tạo tài khoản `safecam_pi`.
 - Fine-tune: chạy ô 8 (ảnh so sánh), ô 9 (xuất NCNN từ `ft_seed2`), lưu `ml/notebooks/finetune.ipynb` (xóa output có ảnh người). Lần train sau bật TensorBoard bằng `settings.update({"tensorboard": True})` trong Python trước khi train.
 - Chụp và gán nhãn s07 (phiên khó), chạy lại `build_dataset.py`, rồi chạy `model.val(split="test")` một lần duy nhất cho mô hình gốc và fine-tune.
 - (21/11) **Camera không tự mở lại sau khi rút cáp (thấy trên laptop, DSHOW)**: `grab()` không trả `False` nên `camera.py` không tới nhánh mở lại (không in `Camera lỗi, mở lại`); cắm lại thì đèn C270 không sáng, phải chạy lại chương trình. Hệ thống vẫn an toàn: sự kiện không bị đóng, ACK và `hb` vẫn chạy. Việc cần làm: thử K12 trên Pi (V4L2); nếu Pi cũng kẹt thì sửa `camera.py` trên nhánh `fix/...`, mở lại khi quá lâu không có ảnh mới thay vì chỉ đếm `grab()` trả `False` (liên quan `observation.py`).
-- Chưa giải quyết: K4 ("cảnh báo ngay" sau khi bỏ che) mâu thuẫn với cửa sổ T giây; chỉ tiêu độ trễ < 2 giây cần đo khi lõi chạy.
+- K4 đã thử trên laptop: bỏ che khoảng 1 giây thì báo, có `after_blind`. Chỉ tiêu độ trễ < 2 giây cần đo bằng slow-motion khi lõi chạy.
+- Trên Pi ở góc cửa sổ: chạy lại `tools/measure_detail.py` cho 4 cảnh (bình thường, tắt bớt đèn, tay che, người đứng sát), thử lại K1, K4, K12.
+- Số sự kiện quan sát chưa lưu vào `state.json`: khởi động lại Pi thì đếm lại từ `O1`, có thể trùng mã cũ ESP32 còn nhớ. Hỏi Thăng firmware có nhớ mã ACK cũ không; cần thì lưu `obs.next_id` trên nhánh `fix/...`.
 - Đo thực tế góc nhìn C270 ở vị trí đặt (đứng ở mép gần nhất của khu cấm, xem có thấy cả người không).

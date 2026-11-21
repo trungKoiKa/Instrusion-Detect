@@ -4,12 +4,9 @@ Các hàm không giữ trạng thái nên test được mà không cần camera 
 
 from collections import deque
 from .intrusion import ACKED, ALARM
-
+from .observation import OBS_LOST, OBS_LOST_ACKED, OBS_OK, OBS_SUSPECT
 # Trạng thái quan sát, trùng docs/mqtt.md. Khi observation.py có hằng số thì import từ đó
-OBS_OK = "ok"
-OBS_SUSPECT = "suspect"
-OBS_LOST = "lost"
-OBS_LOST_ACKED = "lost_acked"
+
 
 def pick_light_buzzer(intr_st, obs_st):
     """Bảng ưu tiên đèn/còi: xét ưu tiên từ trên xuống, gặp dòng nào khớp thì
