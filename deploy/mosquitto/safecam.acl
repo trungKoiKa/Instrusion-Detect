@@ -4,7 +4,7 @@
 # Pi: gửi state, event, hb, status của camera; nhận ACK
 user safecam_pi
 topic write safecam/cam01/#
-topic read safecam/arlam01/#
+topic read safecam/alarm01/#
 
 # ESP32: nhận mọi thứ Pi gửi; gửi ACK và status (kể cả LWT "offline")
 user safecam_esp32
