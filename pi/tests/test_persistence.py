@@ -1,3 +1,5 @@
+from safecam.observation import OBS_LOST, OBS_LOST_ACKED, OBS_OK, OBS_SUSPECT, Observation
+from safecam.persistence import observation_from_dict, observation_to_dict
 from safecam.intrusion import ACKED, ALARM, NONE, SUSPECTED, Intrusion
 from safecam.persistence import (intrusion_from_dict, intrusion_to_dict,
                                  load_state, save_state)
@@ -61,3 +63,35 @@ def test_suspected_not_restored():
     it2 = intrusion_from_dict(intrusion_to_dict(it))
     assert it2.state == NONE
     assert it2.event is None
+
+def test_obs_lost_restored():
+    # K7: đang mất quan sát chưa ACK thì khởi động lại, vẫn báo tiếp
+    obs = Observation(5)
+    obs.update(0, False)   # ok -> suspect
+    obs.update(5, False)   # lỗi đủ 5 giây -> lost, mã 1
+    assert obs.state == OBS_LOST
+    obs2 = observation_from_dict(observation_to_dict(obs), 5)
+    assert obs2.state == OBS_LOST
+    assert obs2.event_id == 1
+    assert obs2.next_id == 2            # sự kiện sau là O2, không trùng O1
+    assert obs2.ack([1]) is True
+
+
+def test_obs_lost_acked_restored():
+    obs = Observation(5)
+    obs.update(0, False)
+    obs.update(5, False)
+    obs.ack([1])
+    obs2 = observation_from_dict(observation_to_dict(obs), 5)
+    assert obs2.state == OBS_LOST_ACKED
+    assert obs2.update(10, True) is True   # camera nhìn lại được thì về ok
+    assert obs2.state == OBS_OK
+
+def test_obs_suspect_not_restored():
+    obs = Observation(5, next_id=4)
+    obs.update(0, False)
+    assert obs.state == OBS_SUSPECT
+    obs2 = observation_from_dict(observation_to_dict(obs), 5)
+    assert obs2.state == OBS_OK
+    assert obs2.event_id is None
+    assert obs2.next_id == 4
