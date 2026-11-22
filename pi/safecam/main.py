@@ -6,12 +6,12 @@ from pathlib import Path
 from .camera import Camera
 from .config import load_config
 from .detector import PersonDetector
-from .intrusion import Intrusion
 from .mqtt_client import MqttClient
-from .observation import OBS_LOST, OBS_OK, Observation, image_detail
+from .observation import OBS_LOST, OBS_LOST_ACKED, OBS_OK, image_detail
 from .outputs import (RecentAcks, build_state, intrusion_event_msg, observation_event_msg,
                       split_ack_ids)
-from .persistence import intrusion_from_dict, intrusion_to_dict, load_state, save_state
+from .persistence import (intrusion_from_dict, intrusion_to_dict, load_state,
+                          observation_from_dict, observation_to_dict, save_state)
 from .zones import EMPTY, UNKNOWN, ZoneMonitor
 
 ROOT = Path(__file__).resolve().parents[2]  # gốc repo
@@ -34,14 +34,20 @@ def main():
     zones = ZoneMonitor.from_config(zone_cfg, det_cfg)
 
     # Khôi phục sự kiện chưa xác nhận (K7); chưa có file hoặc file hỏng thì bắt đầu mới
-    saved = load_state(STATE_PATH)
-    intr = intrusion_from_dict(saved) if saved else Intrusion()
-    obs = Observation.from_config(obs_cfg)  
+    saved = load_state(STATE_PATH) or {}  # chưa có file hoặc file hỏng: dict rỗng, bắt đầu mới
+    intr = intrusion_from_dict(saved.get("intr", {}))
+    obs = observation_from_dict(saved.get("obs", {}), obs_cfg["lost_after_s"])  
     detector = PersonDetector(str(ROOT / det_cfg["model"]), det_cfg["imgsz"], det_cfg["conf"])
     camera = Camera(cam_cfg)
     mqtt = MqttClient(mqtt_cfg)
     camera.start()
     mqtt.start()
+
+    def save():
+        """Ghi cả hai trạng thái vào một file, một lần ghi nguyên tử (K7, K13)"""
+        save_state(STATE_PATH, {"intr": intrusion_to_dict(intr),
+                                "obs": observation_to_dict(obs)})
+
 
     recent = RecentAcks()  # các mã vừa ACK, gửi trong trường "acked"
 
@@ -82,7 +88,7 @@ def main():
                 judged = {z: UNKNOWN if v == EMPTY else v for z, v in verdicts.items()}
             old_id = intr.event.id if intr.event else None
             if intr.update(wall, judged):
-                save_state(STATE_PATH, intrusion_to_dict(intr)) # ghi sổ trước, gửi sau
+                save() # ghi sổ trước, gửi sau
                 if intr.event and intr.event.id != old_id: # vừa mở sự kiện mới
                     blind = obs.state != OBS_OK  # vừa mất quan sát xong (K4)
                     mqtt.publish_event(intrusion_event_msg(intr.event, after_blind=blind))
@@ -91,7 +97,11 @@ def main():
                 zs = sorted(intr.event.zones) if intr.event else []
                 print("Xâm nhập:", intr.state, "khu", zs)
 
+            old_obs = obs.state
             if obs.update(mono, good):
+                # ok <-> suspect không ghi: không khôi phục, lại bật tắt liên tục làm mòn thẻ SD
+                if old_obs in (OBS_LOST, OBS_LOST_ACKED) or obs.state in (OBS_LOST, OBS_LOST_ACKED):
+                    save()
                 if obs.state == OBS_LOST: # vừa vào mất quan sát
                     mqtt.publish_event(observation_event_msg(obs.event_id))
                 send_state()
@@ -102,9 +112,10 @@ def main():
             if acks:
                 recent.add(acks)  # ghi cả mã cũ để ESP32 ngừng gửi lặp
                 intr_ids, obs_ids = split_ack_ids(acks)
-                if intr.ack(intr_ids):
-                    save_state(STATE_PATH, intrusion_to_dict(intr))
-                obs.ack(obs_ids)
+                intr_changed = intr.ack(intr_ids)
+                obs_changed = obs.ack(obs_ids)  # dòng riêng: không để "or" bỏ qua obs.ack
+                if intr_changed or obs_changed:
+                    save()
                 send_state()  # luôn gửi, kể cả khi không có gì đổi
                 print("ACK:", sorted(acks), "->", intr.state, obs.state)
 

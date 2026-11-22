@@ -10,6 +10,7 @@ import os
 from pathlib import Path 
 
 from .intrusion import ACKED, ALARM, NONE, Event, Intrusion
+from .observation import OBS_LOST, OBS_LOST_ACKED, Observation
 
 def save_state(path, data):
     """Chỉ ghi data ra file JSON, an toàn khi mất điện"""
@@ -65,3 +66,20 @@ def intrusion_from_dict(d):
         it.state = NONE #Nghi ngờ chỉ là tạm thời, khởi động lại thì xét lại từ đầu
     return it
 
+def observation_to_dict(obs):
+    """Chỉ lưu những gì cần để báo tiếp. Không lưu bad_since, last_bad:
+    đó là giờ monotonic, khởi động lại thì về 0, vô nghĩa."""
+    return {
+        "state": obs.state,
+        "event_id": obs.event_id,
+        "next_id": obs.next_id,
+    }
+
+def observation_from_dict(d, lost_after_s):
+    """Tạo lại Observation. Cảnh báo quan sát chưa kết thúc (LOST, LOST_ACKED) được khôi phục"""
+    obs = Observation(lost_after_s, next_id=d.get("next_id", 1))
+    if d.get("state") in (OBS_LOST, OBS_LOST_ACKED) and d.get("event_id") is not None:
+        obs.state = d["state"]
+        obs.event_id = d["event_id"]
+    # còn lại giữ OBS_OK như lúc mới tạo: nghi lỗi chỉ là tạm thời
+    return obs

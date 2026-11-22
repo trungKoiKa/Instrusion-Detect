@@ -39,6 +39,7 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 | (22/11) **Nạp ESP32 bằng FLASH + RESET** (ghi trong `esp32/README.md`) | Header P1 chỉ có TX0, RX0, GND, không có DTR/RTS nên `esptool` không tự đưa chip vào chế độ nạp (`No serial data received`); nguồn qua jack DC; Serial Monitor phải tắt trước khi nạp vì giữ cổng COM |
 | (23/11) **Chặn `opencv-python<5`** (PR #39) | pip tự nâng lên 5.0.0.93, kèm `libopenblas` không nạp được trên Pi 4 (`unexpected reloc type`); 4.14.0.94 + numpy 2.5.4 chạy được. Sau mỗi `git pull` phải `pip install -r pi/requirements.txt` (lần này thiếu `python-dotenv`) |
 | (23/11) **Lõi đầu-cuối chạy trên phần cứng thật** (mô hình gốc): người vào khu 2/3 → `alarm` → ESP32 đỏ nháy, còi → bấm nút → ACK 1 lần, Pi xác nhận, ESP32 ngừng gửi → rời khu → `none`, xanh; lặp 4 sự kiện I1–I4. Thấy người thoáng qua thì `suspected` → `none`, không báo. Che camera → `lost` O1, vàng nháy → ACK → `lost_acked`, vàng → bỏ che → xanh. Dừng `main.py` → ESP32 đỏ vàng xen kẽ, chạy lại thì về xanh. Thấy chạy đúng tạm thời: K4 (`after_blind: true`), K7 (khởi động lại vẫn `alarm` I1), camera tự mở lại sau ~30 giây không mở được | Mốc 10/11 hoàn thành trễ ngày 23/11. Chưa phải số liệu chương 3: 7 kịch bản và độ trễ còn phải thử có ghi chép |
+| (23/11) **Lưu trạng thái quan sát vào `state.json`**: file có hai phần `intr`, `obs`; khôi phục `lost`, `lost_acked`, `suspect` thì về `ok`; luôn giữ `next_id`; chỉ ghi khi vào hoặc ra `lost`/`lost_acked`; ghi file trước rồi mới gửi `event` | K7: trên Pi che camera tới `lost`, tắt rồi chạy lại `main.py` thì ESP32 nháy vàng tiếp. Một file ghi một lần nên vẫn nguyên tử (K13). `ok` ↔ `suspect` bật tắt liên tục nên không ghi, để khỏi mòn thẻ SD. Ghi trước rồi gửi: mất điện ở giữa chỉ làm ESP32 biết trễ vài giây, không làm Pi quên sự kiện và đặt trùng mã |
 
 ## Giải thích đã đưa ra (để không phải hỏi lại)
 
@@ -50,10 +51,10 @@ Các câu hỏi đã hỏi, câu trả lời đã thống nhất và lý do. Đ�
 
 ## Còn chờ / việc tiếp theo
 
-Cập nhật 23/11. Đã xong: mọi module Pi trừ `stream` (75 test), Mosquitto có tài khoản và ACL (PR #36, #38), firmware MQTT (PR #37), lõi đầu-cuối chạy trên phần cứng thật với mô hình gốc. Còn trống: `stream`, `deploy/safecam.service`, `tools/calibrate_zones.py`, `tools/latency_led.py`.
+Cập nhật 23/11. Đã xong: mọi module Pi trừ `stream` (78 test), lưu trạng thái quan sát vào `state.json`, Mosquitto có tài khoản và ACL (PR #36, #38), firmware MQTT (PR #37), lõi đầu-cuối chạy trên phần cứng thật với mô hình gốc. Còn trống: `stream`, `deploy/safecam.service`, `tools/calibrate_zones.py`, `tools/latency_led.py`.
 
 - **Cả hai (mốc 24/11, đã sát):** thử 7 kịch bản K1, K4, K5 (tắt router thật), K7, K10, K12, K13, mỗi kịch bản ≥ 5 lần, ghi kết quả; đo độ trễ bằng slow-motion (~30 lần); chạy nền 4–6 giờ đếm báo động giả. Mở đủ 3 nguồn log khi thử.
-- **Trung Anh, trước K7:** lưu trạng thái quan sát vào `state.json` (nhánh `fix/...`). Hiện khởi động lại Pi thì cảnh báo `O…` chưa ACK bị mất (thấy 23/11: O1 không còn sau khi chạy lại) và mã đếm lại từ `O1`. Firmware không nhớ `ackIds` qua lần khởi động lại nên không bị trùng mã phía ESP32.
+- **Trung Anh:** khi thử K7, kiểm tra thêm cảnh báo `O` đã khôi phục vẫn ACK được và lần mất quan sát sau mang mã kế tiếp (`O2`), chưa thử trên Pi.
 - **Thăng:** `deploy/safecam.service` (Pi cắm điện tự chạy, watchdog); đặt IP cố định cho Pi trên router (ESP32 dùng IP, hiện `MQTT_HOST` theo IP lúc thử); đổi mật khẩu `safecam_dev`, `safecam_pi` trước demo (đã lộ trong chat và lịch sử lệnh).
 - Fine-tune: chạy ô 8 (ảnh so sánh), ô 9 (xuất NCNN từ `ft_seed2`), lưu `ml/notebooks/finetune.ipynb` (xóa output có ảnh người). Lần train sau bật TensorBoard bằng `settings.update({"tensorboard": True})` trong Python trước khi train.
 - Chụp và gán nhãn s07 (phiên khó), chạy lại `build_dataset.py`, rồi chạy `model.val(split="test")` một lần duy nhất cho mô hình gốc và fine-tune.
