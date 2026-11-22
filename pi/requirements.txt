@@ -1,5 +1,5 @@
 # Trên Pi: cài torch bản CPU trước (xem pi/README.md), nếu không pip kéo thêm vài GB thư viện CUDA.
-opencv-python
+opencv-python<5  # OpenCV 5.0.0.93 kèm libopenblas không nạp được trên Pi 4 (unexpected reloc type); 4.14.0.94 chạy được
 ultralytics
 ncnn
 paho-mqtt

@@ -8,7 +8,7 @@ Chạy: `python -m safecam.main` (từ thư mục `pi/`). Test: `pytest tests/` 
 mkdir -p ~/tmp && export TMPDIR=~/tmp   # /tmp nằm trong RAM (~2 GB), không đủ cho pip
 python3 -m venv .venv && source .venv/bin/activate
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install -r pi/requirements.txt
+pip install -r pi/requirements.txt   # đã chặn opencv-python<5; cài lại sau mỗi lần git pull để có gói mới
 ```
 
 Mật khẩu MQTT: chép `.env.example` (gốc repo) thành `.env`, điền `SAFECAM_MQTT_PASS`. `.env` không lên git.
