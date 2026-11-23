@@ -156,11 +156,11 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 | K7 | 3 | | | | | |
 | K7 | 4 | | | | | |
 | K7 | 5 | | | | | |
-| K10 | 1 | | | | – | |
-| K10 | 2 | | | | – | |
-| K10 | 3 | | | | – | |
-| K10 | 4 | | | | – | |
-| K10 | 5 | | | | – | |
+| K10 | 1 | 23/11 18:00 | Trung Anh | Đạt | – | I9 → none → I10, còi kêu lại |
+| K10 | 2 | 23/11 18:05 | Trung Anh | Đạt | – | I11 → none → I12 |
+| K10 | 3 | 23/11 18:10 | Trung Anh | Đạt | – | I13 → none → I14 |
+| K10 | 4 | 23/11 18:15 | Trung Anh | Đạt | – | I15 → none → I16 |
+| K10 | 5 | 23/11 18:20 | Trung Anh | Đạt | – | I17 → none → I18 |
 | K12 | 1 | 23/11 16:12 | Trung Anh | Đạt | 9,48 | O2; Pi tự mở lại camera (V4L2); power_line_frequency = 1; vào khu sau khi cắm lại ra I2 |
 | K12 | 2 | 23/11 16:20 | Trung Anh | Đạt | 4 | |
 | K12 | 3 | 23/11 16:28 | Trung Anh | Đạt | 8 | Cắm lại cáp trước khi bấm nút |
