@@ -114,7 +114,7 @@ Broker Mosquitto chạy trên Pi, cổng 1883, bắt buộc có tài khoản (t�
 | Mô hình | Precision, recall, mAP50 trên tập test, so mô hình gốc với fine-tune |
 | Phát hiện xâm nhập | Tỷ lệ bỏ sót và số báo động giả mỗi giờ, qua video kịch bản và chạy liên tục 4–6 giờ |
 | Hiệu năng Pi | FPS, CPU, RAM, nhiệt độ, hạ xung (log CSV) |
-| Độ trễ | Quay slow-motion thấy cả vạch khu cấm và đèn ESP32, đếm số khung hình; mỗi điều kiện khoảng 30 lần thử |
+| Độ trễ | Quay slow-motion thấy cả vạch khu cấm và đèn ESP32, đếm số khung hình; 10–15 lần thử |
 | Giám sát camera | Rút cáp, che bằng tay, giả lập chương trình treo, tắt bớt đèn (để kiểm tra không báo nhầm) |
 | Độ ổn định | Tắt router, khởi động lại Pi, rút nguồn ESP32; đo thời gian khôi phục |
 
@@ -153,7 +153,7 @@ Có video quay sẵn để dự phòng.
 | Trạng thái | Hai trạng thái, lưu bền | ESP32 làm theo `state`, ACK, xử lý mất kết nối |
 | Giám sát camera | Cung cấp ảnh và kết quả YOLO | Module giám sát, watchdog |
 | MQTT, ESP32 | Publish sự kiện | Broker, bảo mật, firmware |
-| Đánh giá | Mô hình, hiệu năng Pi | Độ trễ, độ ổn định, 7 kịch bản sự cố |
+| Đánh giá | Mô hình, hiệu năng Pi, độ trễ | Độ ổn định, 7 kịch bản sự cố |
 
 | Mốc | Cần có |
 | --- | --- |

@@ -15,7 +15,7 @@ Những gì đã trao đổi và lý do các quyết định: @docs/tom_tat_trao
 - Hai trạng thái độc lập: xâm nhập và quan sát camera. Pi giữ trạng thái, ESP32 chỉ làm theo. Khung không quan sát được không bao giờ coi là "không có người".
 - Fine-tune cho **người xa, bị che một phần, góc nhìn lạ, cúi/ngồi**. **Không làm thiếu sáng**, không chặn trần phơi sáng; camera để phơi sáng tự động, chỉ cố định MJPG 640×480 30 fps, 50 Hz.
 - Dữ liệu: `tools/capture_frames.py` tự chụp 2 ảnh/giây, 7 phiên × 110 giây (~1.540 ảnh) tại hiện trường (6 phiên một ngày, phiên thứ 7 ngày khác chỉ dùng cho test; mỗi phiên đổi ánh sáng và trang phục, vài giây đầu không người), lưu `data/raw/<phiên>/`. Không quay video, không `extract_frames.py`. Gán nhãn trên CVAT, **chia tập theo phiên** 4/1/2 thành đúng ba tập `train`, `val`, `test`. Augmentation để mặc định. Không dùng test_hard/test_external, không trộn COCO, không script tự gán nhãn.
-- Phạm vi đánh giá (17/11): chỉ 7 kịch bản sự cố K1, K4, K5, K7, K10, K12, K13 (23/11: mỗi kịch bản thử 1 lần trên phần cứng, K7 2 lần; chỉ ghi lần có log, mã sự kiện khớp `next_id`); chạy nền 4–6 giờ; không thí nghiệm 416 px; `freeze=10` chỉ làm nếu còn thời gian.
+- Phạm vi đánh giá (17/11): chỉ 7 kịch bản sự cố K1, K4, K5, K7, K10, K12, K13 (23/11: mỗi kịch bản thử 1 lần trên phần cứng, K7 2 lần; chỉ ghi lần có log, mã sự kiện khớp `next_id`); chạy nền 4–6 giờ; đo độ trễ 10–15 lần (24/11, Trung Anh làm); không thí nghiệm 416 px; `freeze=10` chỉ làm nếu còn thời gian.
 
 ## Cấu trúc
 - `pi/safecam/`: chương trình chính (camera, detector, zones, intrusion, observation, outputs, persistence, mqtt_client, stream, main). `pi/tests/`: pytest, chạy được trên laptop không cần phần cứng.
