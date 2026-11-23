@@ -136,11 +136,11 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 
 | Kịch bản | Lần | Ngày giờ | Người thử | Đạt | Số đo (s) | Ghi chú |
 | --- | --- | --- | --- | --- | --- | --- |
-| K1 | 1 | | | | – | |
-| K1 | 2 | | | | – | |
-| K1 | 3 | | | | – | |
-| K1 | 4 | | | | – | |
-| K1 | 5 | | | | – | |
+| K1 | 1 | 23/11 16:55 | Trung Anh | Đạt | – | I4, O4; rời khu khi còn che, chờ 10 s không đóng sự kiện |
+| K1 | 2 | 23/11 17:03 | Trung Anh | Đạt | – | |
+| K1 | 3 | 23/11 17:11 | Trung Anh | Đạt | – | Bỏ che khi người vẫn trong khu: giữ acked tới khi rời khu |
+| K1 | 4 | 23/11 17:19 | Trung Anh | Đạt | – | |
+| K1 | 5 | 23/11 17:27 | Trung Anh | Đạt | – | |
 | K4 | 1 | | | | | |
 | K4 | 2 | | | | | |
 | K4 | 3 | | | | | |
