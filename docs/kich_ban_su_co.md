@@ -4,7 +4,7 @@ Soạn 23/11/2026 theo code trên `main` sau PR #41. Mỗi kịch bản thử **
 
 ## Chuẩn bị chung
 
-- Trên Pi: `git checkout main && git pull`, rồi `pip install -r pi/requirements.txt "opencv-python<5"`.
+- Trên Pi: `git checkout main && git pull`, rồi bật venv `source .venv/bin/activate` (đứng ở gốc repo) và `pip install -r pi/requirements.txt "opencv-python<5"`. Mỗi cửa sổ mới (cửa sổ `tmux` mới, SSH lại sau reboot) phải bật lại venv.
 - **Chạy `main.py` trong `tmux`** (cài bằng `sudo apt install tmux`): `tmux new -s safecam`, rồi chạy `main.py` như thường. Thoát ra mà chương trình vẫn chạy: Ctrl+B rồi D. Vào lại: `tmux attach -t safecam`. Lý do: K5 tắt router làm rớt SSH, nên `main.py` chạy thẳng trong cửa sổ SSH sẽ bị tắt theo.
 - Mở đủ 3 nguồn log: `main.py` (Pi), `mosquitto_sub` với tài khoản `safecam_dev` (Pi), Serial ESP32 (`pio device monitor -p COM5`, laptop). Nếu muốn thì mở thêm `watch -n 1 python3 -m json.tool ~/Instrusion-Detect/data/state.json`.
 - Mã sự kiện tăng dần qua các lần thử. Bảng dưới viết `In`, `Om`; khi ghi kết quả thì ghi mã thật (ví dụ I7, O3).
@@ -99,7 +99,7 @@ Mục tiêu: mất camera thì có cảnh báo quan sát, cắm lại thì camer
 | --- | --- | --- |
 | 1 | ESP32 xanh. Rút cáp USB camera khỏi Pi | Pi `Quan sát: suspect None`, rồi `Quan sát: lost m` khoảng 6–8 s sau khi rút (mất ảnh thì mỗi vòng lặp phải chờ 2 s). Pi có in `Camera lỗi, mở lại`, rồi lặp lại `Không mở được camera, thử lại sau 2s`. ESP32 vàng nháy, bíp chậm |
 | 2 | Bấm nút | Pi `ACK: ['Om'] -> none lost_acked`. ESP32 vàng sáng, **chưa được về xanh** |
-| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi khoảng 1 s sau khi có ảnh thì ra `Quan sát: ok None`. ESP32 xanh |
+| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi khoảng 1 s sau khi có ảnh thì ra `Quan sát: ok None` (tính từ lúc cắm cáp thì khoảng 10 s, vì Pi phải nhận USB, chờ lượt mở lại, C270 chỉnh phơi sáng). ESP32 xanh |
 | 4 | Đi vào khu 2 | Pi `alarm`, tức camera chạy thật |
 | 5 | `v4l2-ctl -d /dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_288F8990-video-index0 -C power_line_frequency` | In ra `1` (50 Hz đã được đặt lại) |
 
@@ -161,11 +161,11 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 | K10 | 3 | | | | – | |
 | K10 | 4 | | | | – | |
 | K10 | 5 | | | | – | |
-| K12 | 1 | | | | | |
-| K12 | 2 | | | | | |
-| K12 | 3 | | | | | |
-| K12 | 4 | | | | | |
-| K12 | 5 | | | | | |
+| K12 | 1 | 23/11 16:12 | Trung Anh | Đạt | 9,48 | O2; Pi tự mở lại camera (V4L2); power_line_frequency = 1; vào khu sau khi cắm lại ra I2 |
+| K12 | 2 | 23/11 16:20 | Trung Anh | Đạt | 4 | |
+| K12 | 3 | 23/11 16:28 | Trung Anh | Đạt | 8 | Cắm lại cáp trước khi bấm nút |
+| K12 | 4 | 23/11 16:36 | Trung Anh | Đạt | 6 | |
+| K12 | 5 | 23/11 16:44 | Trung Anh | Đạt | 7 | power_line_frequency = 1 |
 | K13 | 1 | | | | – | |
 | K13 | 2 | | | | – | |
 | K13 | 3 | | | | – | |
