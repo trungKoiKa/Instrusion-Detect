@@ -1,10 +1,12 @@
 # Kịch bản thử sự cố (K1, K4, K5, K7, K10, K12, K13)
 
-Soạn 23/11/2026 theo code trên `main` sau PR #41. Mỗi kịch bản thử **ít nhất 5 lần**. Lần nào cũng ghi một dòng vào bảng kết quả. Lần nào không đạt thì chép log của cả 3 nguồn vào `docs/do_dac/`.
+Soạn 23/11/2026 theo code trên `main` sau PR #41. Nhóm chốt 23/11: **mỗi kịch bản thử 1 lần trên phần cứng thật**, riêng K7 thử 2 lần (Ctrl+C và `sudo reboot`). Các nhánh phụ không thử trên phần cứng (ghi ở từng kịch bản) đã kiểm bằng giả lập vòng lặp `main.py` trên laptop hoặc test tự động trong `pi/tests/`.
+
+Mỗi lần thử ghi một dòng vào bảng kết quả, kèm **mã sự kiện đọc từ log** (`In`, `Om`). Mã phải khớp bộ đếm `next_id` trong `state.json`; lần nào không có log chứng minh thì không ghi. Lần nào không đạt thì chép log của cả 3 nguồn vào `docs/do_dac/`.
 
 ## Chuẩn bị chung
 
-- Trên Pi: `git checkout main && git pull`, rồi `pip install -r pi/requirements.txt "opencv-python<5"`.
+- Trên Pi: `git checkout main && git pull`, rồi bật venv `source .venv/bin/activate` (đứng ở gốc repo) và `pip install -r pi/requirements.txt "opencv-python<5"`. Mỗi cửa sổ mới (cửa sổ `tmux` mới, SSH lại sau reboot) phải bật lại venv.
 - **Chạy `main.py` trong `tmux`** (cài bằng `sudo apt install tmux`): `tmux new -s safecam`, rồi chạy `main.py` như thường. Thoát ra mà chương trình vẫn chạy: Ctrl+B rồi D. Vào lại: `tmux attach -t safecam`. Lý do: K5 tắt router làm rớt SSH, nên `main.py` chạy thẳng trong cửa sổ SSH sẽ bị tắt theo.
 - Mở đủ 3 nguồn log: `main.py` (Pi), `mosquitto_sub` với tài khoản `safecam_dev` (Pi), Serial ESP32 (`pio device monitor -p COM5`, laptop). Nếu muốn thì mở thêm `watch -n 1 python3 -m json.tool ~/Instrusion-Detect/data/state.json`.
 - Mã sự kiện tăng dần qua các lần thử. Bảng dưới viết `In`, `Om`; khi ghi kết quả thì ghi mã thật (ví dụ I7, O3).
@@ -25,7 +27,7 @@ Mục tiêu: lúc camera bị che, Pi không được coi là "vắng người",
 | 4 | Vẫn che, rời ra khu 0/1, chờ 10 s | **Không** có `Xâm nhập: none`. ESP32 vẫn đỏ sáng |
 | 5 | Bỏ che | Khoảng 1 s sau có `Quan sát: ok None`, rồi khoảng 2 s sau nữa có `Xâm nhập: none khu []`. ESP32 xanh |
 
-Đạt khi bước 4 không đóng sự kiện và bước 5 đóng đúng lúc. Làm thêm ít nhất 1 lần **bỏ che lúc người vẫn trong khu**: phải giữ `acked`, đỏ sáng, cho tới khi người rời khu.
+Đạt khi bước 4 không đóng sự kiện và bước 5 đóng đúng lúc. Biến thể **bỏ che lúc người vẫn trong khu** (phải giữ `acked`, đỏ sáng, cho tới khi người rời khu) chỉ kiểm bằng giả lập.
 
 ## K4. Che camera, đi vào khu, bỏ che
 
@@ -77,7 +79,7 @@ Mục tiêu: sự kiện chưa xác nhận không mất sau khi khởi động l
 | 3 | Bấm nút | Pi `ACK: ['Om'] -> none lost_acked`, rồi `Quan sát: ok None`. ESP32 xanh |
 | 4 | Che lại ≥ 6 s | Pi `Quan sát: lost m+1`, **không phải** `m` |
 
-Trong 5 lần thử, ít nhất 2 lần dùng `sudo reboot` thật. Vì chưa có `safecam.service` nên sau khi Pi khởi động xong phải SSH vào chạy `main.py` bằng tay. Cột Số đo ghi thời gian từ lúc chạy `main.py` tới lúc Serial báo `Nghe duoc Pi`. Khi đã có service thì đo lại, tính từ lúc gõ lệnh reboot.
+Thử 2 lần: lần 1 dừng bằng Ctrl+C, làm cả phần A và B; lần 2 dùng `sudo reboot` thật, làm phần A. Vì chưa có `safecam.service` nên sau khi Pi khởi động xong phải SSH vào chạy `main.py` bằng tay. Cột Số đo ghi thời gian từ lúc chạy `main.py` tới lúc Serial báo `Nghe duoc Pi`. Khi đã có service thì đo lại, tính từ lúc gõ lệnh reboot.
 
 ## K10. Người vẫn trong khu sau khi sự kiện kết thúc
 
@@ -99,11 +101,11 @@ Mục tiêu: mất camera thì có cảnh báo quan sát, cắm lại thì camer
 | --- | --- | --- |
 | 1 | ESP32 xanh. Rút cáp USB camera khỏi Pi | Pi `Quan sát: suspect None`, rồi `Quan sát: lost m` khoảng 6–8 s sau khi rút (mất ảnh thì mỗi vòng lặp phải chờ 2 s). Pi có in `Camera lỗi, mở lại`, rồi lặp lại `Không mở được camera, thử lại sau 2s`. ESP32 vàng nháy, bíp chậm |
 | 2 | Bấm nút | Pi `ACK: ['Om'] -> none lost_acked`. ESP32 vàng sáng, **chưa được về xanh** |
-| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi khoảng 1 s sau khi có ảnh thì ra `Quan sát: ok None`. ESP32 xanh |
+| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi khoảng 1 s sau khi có ảnh thì ra `Quan sát: ok None` (tính từ lúc cắm cáp thì khoảng 10 s, vì Pi phải nhận USB, chờ lượt mở lại, C270 chỉnh phơi sáng). ESP32 xanh |
 | 4 | Đi vào khu 2 | Pi `alarm`, tức camera chạy thật |
 | 5 | `v4l2-ctl -d /dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_288F8990-video-index0 -C power_line_frequency` | In ra `1` (50 Hz đã được đặt lại) |
 
-Đạt khi bước 3 tự mở lại camera. Cột Số đo ghi thời gian từ lúc cắm cáp tới lúc có `Quan sát: ok`. Làm thêm 1 lần cắm lại **trước** khi bấm nút: ESP32 phải giữ vàng nháy tới khi bấm, rồi về xanh.
+Đạt khi bước 3 tự mở lại camera. Cột Số đo ghi thời gian từ lúc cắm cáp tới lúc có `Quan sát: ok`. Trường hợp cắm lại **trước** khi bấm nút (ESP32 phải giữ vàng nháy tới khi bấm, rồi về xanh) chỉ kiểm bằng giả lập.
 **Không đạt** nếu rút cáp mà không thấy `Camera lỗi, mở lại`, hoặc cắm lại quá 30 s vẫn không có ảnh. Khi đó chép log lại, rồi sửa `camera.py` trên nhánh `fix/...` (mở lại khi quá lâu không có ảnh mới).
 
 ## K13. Mất điện ngay sau khi trạng thái đổi
@@ -112,15 +114,9 @@ Mục tiêu: file `state.json` không bao giờ bị ghi dở.
 
 Rút điện có rủi ro nhỏ làm hỏng thẻ SD. Trước khi thử, chép `.env` ra laptop và kiểm tra code đã có trên GitHub.
 
-| Lần | Rút điện Pi ngay sau khi (trong khoảng 1 s) |
-| --- | --- |
-| 1 | vừa có `Xâm nhập: alarm` |
-| 2 | vừa bấm nút (`acked`) |
-| 3 | vừa có `Xâm nhập: none` |
-| 4 | vừa có `Quan sát: lost` |
-| 5 | vừa ACK cảnh báo quan sát (`lost_acked`) |
+Thử 1 lần: rút dây nguồn Pi (không dùng `sudo reboot`) trong khoảng 1 s sau khi log có `Xâm nhập: alarm`. Mọi lần đổi trạng thái (`acked`, `none`, `lost`, `lost_acked`) đều ghi file qua cùng một hàm ghi nguyên tử, nên các thời điểm khác kiểm bằng test tự động trong `pi/tests/test_persistence.py`: ghi bị ngắt thì file cũ còn nguyên (`test_old_file_survives_failed_write`), file hỏng thì không làm dừng chương trình (`test_corrupt_file_returns_none_and_kept`), khôi phục từng trạng thái (`test_acked_restored`, `test_obs_lost_restored`, `test_obs_lost_acked_restored`).
 
-Sau mỗi lần rút, cắm điện, SSH vào và kiểm tra:
+Sau khi rút, cắm điện, SSH vào và kiểm tra:
 
 | Kiểm tra | Phải thấy gì |
 | --- | --- |
@@ -128,46 +124,19 @@ Sau mỗi lần rút, cắm điện, SSH vào và kiểm tra:
 | `ls ~/Instrusion-Detect/data/` | Không có `state.json.bad`. Có `state.json.tmp` sót lại thì không sao |
 | Chạy `main.py` | Không lỗi. Trạng thái là trạng thái ngay trước hoặc ngay sau lần đổi cuối, không phải trạng thái nào khác. ESP32 làm theo |
 
-Đạt khi cả 5 lần file đều đọc được. Cột Ghi chú ghi trạng thái lúc rút và trạng thái đọc được sau khi bật lại.
+Đạt khi file đọc được và trạng thái khôi phục đúng. Cột Ghi chú ghi trạng thái lúc rút và trạng thái đọc được sau khi bật lại.
 
 ## Bảng kết quả
 
-Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (chạy `main.py` → `Nghe duoc Pi`), K12 (cắm cáp → `ok`), đơn vị giây.
+Kết quả 23/11 (mô hình gốc): 8/8 lần đạt. Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (chạy `main.py` → `Nghe duoc Pi`), K12 (cắm cáp → `ok`), đơn vị giây.
 
 | Kịch bản | Lần | Ngày giờ | Người thử | Đạt | Số đo (s) | Ghi chú |
 | --- | --- | --- | --- | --- | --- | --- |
-| K1 | 1 | | | | – | |
-| K1 | 2 | | | | – | |
-| K1 | 3 | | | | – | |
-| K1 | 4 | | | | – | |
-| K1 | 5 | | | | – | |
-| K4 | 1 | | | | | |
-| K4 | 2 | | | | | |
-| K4 | 3 | | | | | |
-| K4 | 4 | | | | | |
-| K4 | 5 | | | | | |
-| K5 | 1 | | | | | |
-| K5 | 2 | | | | | |
-| K5 | 3 | | | | | |
-| K5 | 4 | | | | | |
-| K5 | 5 | | | | | |
-| K7 | 1 | | | | | |
-| K7 | 2 | | | | | |
-| K7 | 3 | | | | | |
-| K7 | 4 | | | | | |
-| K7 | 5 | | | | | |
-| K10 | 1 | | | | – | |
-| K10 | 2 | | | | – | |
-| K10 | 3 | | | | – | |
-| K10 | 4 | | | | – | |
-| K10 | 5 | | | | – | |
-| K12 | 1 | | | | | |
-| K12 | 2 | | | | | |
-| K12 | 3 | | | | | |
-| K12 | 4 | | | | | |
-| K12 | 5 | | | | | |
-| K13 | 1 | | | | – | |
-| K13 | 2 | | | | – | |
-| K13 | 3 | | | | – | |
-| K13 | 4 | | | | – | |
-| K13 | 5 | | | | – | |
+| K1 | 1 | 23/11 16:55 | Trung Anh | Đạt | – | I4, O4; rời khu khi còn che, chờ 10 s không đóng sự kiện |
+| K4 | 1 | 23/11 17:35 | Trung Anh | Đạt | 2 | I8, O6; after_blind true; ACK một lần cả I8 và O6 |
+| K5 | 1 | 23/11 19:15 | Trung Anh | Đạt | 45 | I19; log Pi có 1 ACK I19; log Serial chỉ lưu tới `Mat WiFi` |
+| K7 | 1 | 23/11 18:30 | Trung Anh | Đạt | – | Ctrl+C. A: khôi phục alarm I12, sự kiện sau I13. B: khôi phục lost O7, ACK được, che lại ra O8 |
+| K7 | 2 | 23/11 18:50 | Trung Anh | Đạt | 3,5 | sudo reboot. A: khôi phục alarm I15, sự kiện sau I16 |
+| K10 | 1 | 23/11 18:00 | Trung Anh | Đạt | – | I9 → none → I10, còi kêu lại |
+| K12 | 1 | 23/11 16:12 | Trung Anh | Đạt | 9,48 | O2; Pi tự mở lại camera (V4L2); power_line_frequency = 1; vào khu sau khi cắm lại ra I2 |
+| K13 | 1 | 23/11 17:39 (giờ Pi) | Trung Anh | Đạt | – | Rút điện ngay sau `alarm` I20: state.json đọc được, không có .bad, khôi phục alarm I20, next_id 21 |

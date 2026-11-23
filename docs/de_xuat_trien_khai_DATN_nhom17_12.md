@@ -118,7 +118,7 @@ Broker Mosquitto chạy trên Pi, cổng 1883, bắt buộc có tài khoản (t�
 | Giám sát camera | Rút cáp, che bằng tay, giả lập chương trình treo, tắt bớt đèn (để kiểm tra không báo nhầm) |
 | Độ ổn định | Tắt router, khởi động lại Pi, rút nguồn ESP32; đo thời gian khôi phục |
 
-Kịch bản sự cố (mỗi kịch bản thử ít nhất 5 lần). Số thứ tự giữ theo bản trước; các kịch bản K2, K3, K6, K8, K9, K11 chuyển sang hướng phát triển (mục 10).
+Kịch bản sự cố (mỗi kịch bản thử 1 lần trên phần cứng thật, K7 thử 2 lần; các nhánh phụ kiểm bằng giả lập và test tự động). Số thứ tự giữ theo bản trước; các kịch bản K2, K3, K6, K8, K9, K11 chuyển sang hướng phát triển (mục 10).
 
 | # | Kịch bản | Kết quả đúng |
 | --- | --- | --- |
