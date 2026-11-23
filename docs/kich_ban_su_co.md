@@ -23,7 +23,7 @@ Mục tiêu: lúc camera bị che, Pi không được coi là "vắng người",
 | 2 | Vẫn đứng trong khu, che kín camera ≥ 6 s | Pi `Quan sát: lost m`. MQTTX có `event` `Om`, `state` có `pending: ["In","Om"]`. ESP32 **vẫn đỏ nháy, còi kêu** (ưu tiên 1) |
 | 3 | Vẫn che, bấm nút | Serial `Bam nut: 2 ma cho gui`, `Gui ACK: {"ids":["In","Om"]}`. Pi `ACK: [...] -> acked lost_acked`. ESP32 đỏ sáng, còi tắt |
 | 4 | Vẫn che, rời ra khu 0/1, chờ 10 s | **Không** có `Xâm nhập: none`. ESP32 vẫn đỏ sáng |
-| 5 | Bỏ che | Khoảng 2 s sau có `Quan sát: ok None`, rồi khoảng 2–4 s sau nữa có `Xâm nhập: none khu []`. ESP32 xanh |
+| 5 | Bỏ che | Khoảng 1 s sau có `Quan sát: ok None`, rồi khoảng 2 s sau nữa có `Xâm nhập: none khu []`. ESP32 xanh |
 
 Đạt khi bước 4 không đóng sự kiện và bước 5 đóng đúng lúc. Làm thêm ít nhất 1 lần **bỏ che lúc người vẫn trong khu**: phải giữ `acked`, đỏ sáng, cho tới khi người rời khu.
 
@@ -35,10 +35,10 @@ Mục tiêu: người lẻn vào lúc camera bị che thì vẫn bị báo ngay 
 | --- | --- | --- |
 | 1 | Khu cấm vắng, ESP32 xanh. Che kín camera ≥ 6 s, **không bấm nút** | Pi `Quan sát: lost m`. ESP32 vàng nháy, bíp chậm |
 | 2 | Vẫn che, đi vào khu 2, đứng yên | Không có `Xâm nhập: alarm` (camera không thấy gì) |
-| 3 | Bỏ che, bấm đồng hồ | Vài giây sau Pi `Xâm nhập: alarm khu [2]`. MQTTX `event` có `"after_blind": true`. ESP32 đỏ nháy, còi kêu |
+| 3 | Bỏ che, bấm đồng hồ | Khoảng 1 s sau Pi `Xâm nhập: alarm khu [2]`. MQTTX `event` có `"after_blind": true`. ESP32 đỏ nháy, còi kêu |
 | 4 | Bấm nút, rời khu | Pi `ACK: ['In', 'Om'] -> ...`, sau đó `Quan sát: ok None`, rồi `Xâm nhập: none`. ESP32 xanh |
 
-Đạt khi bước 3 báo động và có `after_blind: true`. Cột Số đo ghi thời gian từ lúc bỏ che tới lúc còi kêu, đo ước lượng bằng đồng hồ (độ trễ chính thức đo riêng bằng slow-motion). Lưu ý: nếu che chưa tới `lost` rồi bỏ che thì sự kiện mang `after_blind: false`. Đó là hành vi đúng của code hiện tại.
+Đạt khi bước 3 báo động và có `after_blind: true`. Cột Số đo ghi thời gian từ lúc bỏ che tới lúc còi kêu, đo ước lượng bằng đồng hồ (độ trễ chính thức đo riêng bằng slow-motion). Lưu ý: che ngắn (chưa tới `lost`) rồi bỏ che thì sự kiện **vẫn** mang `after_blind: true`, vì lúc báo động camera còn ở `suspect`, chưa về `ok`. Đó là hành vi đúng của code hiện tại.
 
 ## K5. Đang cảnh báo → tắt router → bấm nút → bật router
 
@@ -64,7 +64,7 @@ Mục tiêu: sự kiện chưa xác nhận không mất sau khi khởi động l
 | --- | --- | --- |
 | 1 | Đi vào khu 2 | Pi `alarm` `In`, ESP32 đỏ nháy, còi kêu |
 | 2 | Dừng Pi: Ctrl+C `main.py`, hoặc `sudo reboot` | Khoảng 6 s sau Serial `MAT TIN HIEU PI`, ESP32 vẫn đỏ nháy, còi kêu |
-| 3 | Chạy lại `main.py`, bấm đồng hồ | Pi `Sẵn sàng. Trạng thái xâm nhập: alarm`. MQTTX `state` có `seq` bắt đầu lại từ 1, vẫn mã `In`, `pending: ["In"]`. Serial `Nghe duoc Pi` |
+| 3 | Chạy lại `main.py`, bấm đồng hồ | Pi `Sẵn sàng. Trạng thái xâm nhập: alarm`. MQTTX `state` có `seq` bắt đầu lại từ 1, vẫn mã `In`, `pending: ["In"]`. Serial `Nghe duoc Pi`. Lúc camera đang mở có thể thấy `Quan sát: suspect None` rồi `ok`: đó là bình thường |
 | 4 | Bấm nút | Pi `ACK: ['In'] -> acked ok`, ESP32 đỏ sáng |
 | 5 | Rời khu, chờ về xanh, rồi vào lại khu | Sự kiện mới mang mã `I(n+1)`, không lặp lại `In` |
 
@@ -97,9 +97,9 @@ Mục tiêu: mất camera thì có cảnh báo quan sát, cắm lại thì camer
 
 | Bước | Làm gì | Phải thấy gì |
 | --- | --- | --- |
-| 1 | ESP32 xanh. Rút cáp USB camera khỏi Pi | Pi `Quan sát: suspect None`, khoảng 5 s sau `Quan sát: lost m`. Pi có in `Camera lỗi, mở lại`, rồi lặp lại `Không mở được camera, thử lại sau 2s`. ESP32 vàng nháy, bíp chậm |
+| 1 | ESP32 xanh. Rút cáp USB camera khỏi Pi | Pi `Quan sát: suspect None`, rồi `Quan sát: lost m` khoảng 6–8 s sau khi rút (mất ảnh thì mỗi vòng lặp phải chờ 2 s). Pi có in `Camera lỗi, mở lại`, rồi lặp lại `Không mở được camera, thử lại sau 2s`. ESP32 vàng nháy, bíp chậm |
 | 2 | Bấm nút | Pi `ACK: ['Om'] -> none lost_acked`. ESP32 vàng sáng, **chưa được về xanh** |
-| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi `Quan sát: ok None`. ESP32 xanh |
+| 3 | Cắm lại cáp, bấm đồng hồ | Hết dòng `Không mở được camera`, rồi khoảng 1 s sau khi có ảnh thì ra `Quan sát: ok None`. ESP32 xanh |
 | 4 | Đi vào khu 2 | Pi `alarm`, tức camera chạy thật |
 | 5 | `v4l2-ctl -d /dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_288F8990-video-index0 -C power_line_frequency` | In ra `1` (50 Hz đã được đặt lại) |
 
