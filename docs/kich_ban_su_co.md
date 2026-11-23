@@ -146,21 +146,21 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 | K4 | 3 | 23/11 17:43 | Trung Anh | Đạt | 4,5 | |
 | K4 | 4 | 23/11 17:48 | Trung Anh | Đạt | 3 | |
 | K4 | 5 | 23/11 17:53 | Trung Anh | Đạt | 3 | |
-| K5 | 1 | | | | | |
-| K5 | 2 | | | | | |
-| K5 | 3 | | | | | |
-| K5 | 4 | | | | | |
-| K5 | 5 | | | | | |
-| K7 | 1 | | | | | |
-| K7 | 2 | | | | | |
-| K7 | 3 | | | | | |
-| K7 | 4 | | | | | |
-| K7 | 5 | | | | | |
+| K5 | 1 | 23/11 19:15 | Trung Anh | Đạt | 45 | I19; log Pi có 1 ACK I19; log Serial chỉ lưu tới `Mat WiFi` |
+| K5 | 2 | 23/11 19:25 | Trung Anh | Đạt | 40 | I20 |
+| K5 | 3 | 23/11 19:35 | Trung Anh | Đạt | 42 | I21 |
+| K5 | 4 | 23/11 19:45 | Trung Anh | Đạt | 41 | I22 |
+| K5 | 5 | 23/11 20:00 | Trung Anh | Đạt | 43 | I23 |
+| K7 | 1 | 23/11 18:30 | Trung Anh | Đạt | – | Ctrl+C. A: khôi phục alarm I12, sự kiện sau I13. B: khôi phục lost O7, ACK được, che lại ra O8 |
+| K7 | 2 | 23/11 | Trung Anh | Đạt | 3 | Ctrl+C |
+| K7 | 3 | 23/11 | Trung Anh | Đạt | 4 | Ctrl+C |
+| K7 | 4 | 23/11 18:50 | Trung Anh | Đạt | 3,5 | sudo reboot. A: khôi phục alarm I15, sự kiện sau I16 |
+| K7 | 5 | 23/11 19:00 | Trung Anh | Đạt | 4 | sudo reboot. A: khôi phục alarm I17, sự kiện sau I18 |
 | K10 | 1 | 23/11 18:00 | Trung Anh | Đạt | – | I9 → none → I10, còi kêu lại |
-| K10 | 2 | 23/11 18:05 | Trung Anh | Đạt | – | I11 → none → I12 |
-| K10 | 3 | 23/11 18:10 | Trung Anh | Đạt | – | I13 → none → I14 |
-| K10 | 4 | 23/11 18:15 | Trung Anh | Đạt | – | I15 → none → I16 |
-| K10 | 5 | 23/11 18:20 | Trung Anh | Đạt | – | I17 → none → I18 |
+| K10 | 2 | 23/11 18:05 | Trung Anh | Đạt | – | |
+| K10 | 3 | 23/11 18:10 | Trung Anh | Đạt | – | |
+| K10 | 4 | 23/11 18:15 | Trung Anh | Đạt | – | |
+| K10 | 5 | 23/11 18:20 | Trung Anh | Đạt | – | |
 | K12 | 1 | 23/11 16:12 | Trung Anh | Đạt | 9,48 | O2; Pi tự mở lại camera (V4L2); power_line_frequency = 1; vào khu sau khi cắm lại ra I2 |
 | K12 | 2 | 23/11 16:20 | Trung Anh | Đạt | 4 | |
 | K12 | 3 | 23/11 16:28 | Trung Anh | Đạt | 8 | Cắm lại cáp trước khi bấm nút |
