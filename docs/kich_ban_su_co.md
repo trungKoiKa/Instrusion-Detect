@@ -141,11 +141,11 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 | K1 | 3 | 23/11 17:11 | Trung Anh | Đạt | – | Bỏ che khi người vẫn trong khu: giữ acked tới khi rời khu |
 | K1 | 4 | 23/11 17:19 | Trung Anh | Đạt | – | |
 | K1 | 5 | 23/11 17:27 | Trung Anh | Đạt | – | |
-| K4 | 1 | | | | | |
-| K4 | 2 | | | | | |
-| K4 | 3 | | | | | |
-| K4 | 4 | | | | | |
-| K4 | 5 | | | | | |
+| K4 | 1 | 23/11 17:35 | Trung Anh | Đạt | 2 | I8, O6; after_blind true; ACK một lần cả I8 và O6 |
+| K4 | 2 | 23/11 17:40 | Trung Anh | Đạt | 4 | |
+| K4 | 3 | 23/11 17:43 | Trung Anh | Đạt | 4,5 | |
+| K4 | 4 | 23/11 17:48 | Trung Anh | Đạt | 3 | |
+| K4 | 5 | 23/11 17:53 | Trung Anh | Đạt | 3 | |
 | K5 | 1 | | | | | |
 | K5 | 2 | | | | | |
 | K5 | 3 | | | | | |
