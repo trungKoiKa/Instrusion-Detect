@@ -137,36 +137,36 @@ Cột Số đo: K4 (bỏ che → còi), K5 (cắm router → đỏ sáng), K7 (c
 | Kịch bản | Lần | Ngày giờ | Người thử | Đạt | Số đo (s) | Ghi chú |
 | --- | --- | --- | --- | --- | --- | --- |
 | K1 | 1 | 23/11 16:55 | Trung Anh | Đạt | – | I4, O4; rời khu khi còn che, chờ 10 s không đóng sự kiện |
-| K1 | 2 | 23/11 17:03 | Trung Anh | Đạt | – | |
-| K1 | 3 | 23/11 17:11 | Trung Anh | Đạt | – | Bỏ che khi người vẫn trong khu: giữ acked tới khi rời khu |
-| K1 | 4 | 23/11 17:19 | Trung Anh | Đạt | – | |
-| K1 | 5 | 23/11 17:27 | Trung Anh | Đạt | – | |
+| K1 | 2 | | | | – | |
+| K1 | 3 | | | | – | |
+| K1 | 4 | | | | – | |
+| K1 | 5 | | | | – | |
 | K4 | 1 | 23/11 17:35 | Trung Anh | Đạt | 2 | I8, O6; after_blind true; ACK một lần cả I8 và O6 |
-| K4 | 2 | 23/11 17:40 | Trung Anh | Đạt | 4 | |
-| K4 | 3 | 23/11 17:43 | Trung Anh | Đạt | 4,5 | |
-| K4 | 4 | 23/11 17:48 | Trung Anh | Đạt | 3 | |
-| K4 | 5 | 23/11 17:53 | Trung Anh | Đạt | 3 | |
+| K4 | 2 | | | | | |
+| K4 | 3 | | | | | |
+| K4 | 4 | | | | | |
+| K4 | 5 | | | | | |
 | K5 | 1 | 23/11 19:15 | Trung Anh | Đạt | 45 | I19; log Pi có 1 ACK I19; log Serial chỉ lưu tới `Mat WiFi` |
-| K5 | 2 | 23/11 19:25 | Trung Anh | Đạt | 40 | I20 |
-| K5 | 3 | 23/11 19:35 | Trung Anh | Đạt | 42 | I21 |
-| K5 | 4 | 23/11 19:45 | Trung Anh | Đạt | 41 | I22 |
-| K5 | 5 | 23/11 20:00 | Trung Anh | Đạt | 43 | I23 |
+| K5 | 2 | | | | | |
+| K5 | 3 | | | | | |
+| K5 | 4 | | | | | |
+| K5 | 5 | | | | | |
 | K7 | 1 | 23/11 18:30 | Trung Anh | Đạt | – | Ctrl+C. A: khôi phục alarm I12, sự kiện sau I13. B: khôi phục lost O7, ACK được, che lại ra O8 |
-| K7 | 2 | 23/11 | Trung Anh | Đạt | 3 | Ctrl+C |
-| K7 | 3 | 23/11 | Trung Anh | Đạt | 4 | Ctrl+C |
-| K7 | 4 | 23/11 18:50 | Trung Anh | Đạt | 3,5 | sudo reboot. A: khôi phục alarm I15, sự kiện sau I16 |
-| K7 | 5 | 23/11 19:00 | Trung Anh | Đạt | 4 | sudo reboot. A: khôi phục alarm I17, sự kiện sau I18 |
+| K7 | 2 | 23/11 18:50 | Trung Anh | Đạt | 3,5 | sudo reboot. A: khôi phục alarm I15, sự kiện sau I16 |
+| K7 | 3 | | | | | |
+| K7 | 4 | | | | | |
+| K7 | 5 | | | | | |
 | K10 | 1 | 23/11 18:00 | Trung Anh | Đạt | – | I9 → none → I10, còi kêu lại |
-| K10 | 2 | 23/11 18:05 | Trung Anh | Đạt | – | |
-| K10 | 3 | 23/11 18:10 | Trung Anh | Đạt | – | |
-| K10 | 4 | 23/11 18:15 | Trung Anh | Đạt | – | |
-| K10 | 5 | 23/11 18:20 | Trung Anh | Đạt | – | |
+| K10 | 2 | | | | – | |
+| K10 | 3 | | | | – | |
+| K10 | 4 | | | | – | |
+| K10 | 5 | | | | – | |
 | K12 | 1 | 23/11 16:12 | Trung Anh | Đạt | 9,48 | O2; Pi tự mở lại camera (V4L2); power_line_frequency = 1; vào khu sau khi cắm lại ra I2 |
-| K12 | 2 | 23/11 16:20 | Trung Anh | Đạt | 4 | |
-| K12 | 3 | 23/11 16:28 | Trung Anh | Đạt | 8 | Cắm lại cáp trước khi bấm nút |
-| K12 | 4 | 23/11 16:36 | Trung Anh | Đạt | 6 | |
-| K12 | 5 | 23/11 16:44 | Trung Anh | Đạt | 7 | power_line_frequency = 1 |
-| K13 | 1 | | | | – | |
+| K12 | 2 | | | | | |
+| K12 | 3 | | | | | |
+| K12 | 4 | | | | | |
+| K12 | 5 | | | | | |
+| K13 | 1 | 23/11 17:39 (giờ Pi) | Trung Anh | Đạt | – | Rút điện ngay sau `alarm` I20: state.json đọc được, không có .bad, khôi phục alarm I20, next_id 21 |
 | K13 | 2 | | | | – | |
 | K13 | 3 | | | | – | |
 | K13 | 4 | | | | – | |
