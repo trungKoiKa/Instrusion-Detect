@@ -126,7 +126,66 @@ Ngày 23/11/2026, nhóm chạy lõi hệ thống đầu cuối trên phần cứ
 
 ### 3.5.2 Độ trễ cảnh báo
 
-[cần bổ sung: phương pháp đo bằng quay slow-motion (tốc độ khung hình của điện thoại, vị trí đặt máy quay để thấy cả vạch khu và đèn ESP32), số lần thử, bảng kết quả, giá trị trung bình, phân vị 95%, so với chỉ tiêu PCN1 dưới 2 giây]
+Phép đo này xác định thời gian từ lúc người bước vào khu cấm tới lúc trạm ESP32 báo động (PCN1). Nó cũng cho biết luật cửa sổ T giây làm hệ thống báo chậm đi bao nhiêu. Luật này chờ đủ bằng chứng rồi mới báo để chống báo giả, nên hệ thống không thể báo ngay khi người vừa bước vào khu. Phép đo này đi cặp với phép chạy liên tục ở mục 3.5.3: chạy liên tục kiểm tra hệ thống không báo nhầm, còn đo độ trễ kiểm tra hệ thống không báo quá chậm.
+
+**Cách làm.** Ngày 24/11/2026, nhóm dán một băng dính dọc trên tường, đúng cột x = 320 điểm ảnh, là ranh giới giữa khu 1 và khu 2 (khu cấm). Vị trí băng dính được kiểm tra trên ảnh chụp từ C270. Một điện thoại đặt cố định sát C270, cùng hướng nhìn, quay video thường 30 khung hình/giây; khung hình thấy cả băng dính, đường đi và đèn đỏ của ESP32. Mỗi lượt, một người đứng ở khu 1 rồi đi bình thường sang khu 2. Khi đèn đỏ sáng, người trực bấm nút xác nhận; người thử rời khu, chờ đèn về xanh thêm 5 giây rồi làm lượt sau. Toàn bộ các lượt nằm trong một video liền. Nhóm đọc video từng khung bằng phần mềm Avidemux để lấy hai thời điểm:
+
+- tA: khung đầu tiên mà đường giữa thân người (giữa hai vai) đã qua băng dính. Nhóm lấy giữa thân thay cho tay chân vì Pi xét khu theo tâm ngang của khung người (mục 2.3.3).
+- tB: khung đầu tiên đèn đỏ của ESP32 sáng.
+
+Độ trễ của mỗi lượt là tB − tA. Mỗi thời điểm lệch tối đa một khung hình (1/30 giây), nên sai số mỗi lượt khoảng ±0,07 giây, nhỏ so với mức 2 giây của chỉ tiêu. Log có gắn giờ của `main.py` được dùng để kiểm tra mỗi lượt đều có báo động và xác nhận. Phép đo dùng mô hình gốc và các tham số tạm ở Bảng 2.5: conf = 0,25, T = 2 s, K_min = 5, p = 0,5, n_min = 8, khu cấm 2 và 3. [cần bổ sung: khoảng cách từ người tới camera lúc thử]
+
+Bảng 3.6: Độ trễ cảnh báo của 8 lượt đo (24/11, mô hình gốc)
+
+| Lượt | tA (phút:giây) | tB (phút:giây) | Độ trễ (s) |
+| --- | --- | --- | --- |
+| 1 | 0:15,335 | 0:16,301 | 0,97 |
+| 2 | 0:29,003 | 0:30,470 | 1,47 |
+| 3 | 0:41,470 | 0:42,969 | 1,50 |
+| 4 | 0:52,904 | 0:53,805 | 0,90 |
+| 5 | 1:06,873 | 1:07,540 | 0,67 |
+| 6 | 1:21,908 | 1:24,208 | 2,30 |
+| 7 | 1:33,008 | 1:34,234 | 1,23 |
+| 8 | 1:48,909 | 1:50,376 | 1,47 |
+
+Bảng 3.7: Tổng hợp độ trễ cảnh báo
+
+| Chỉ số | Giá trị |
+| --- | --- |
+| Trung bình ± độ lệch chuẩn | 1,31 ± 0,50 s |
+| Trung vị | 1,35 s |
+| Nhỏ nhất / lớn nhất | 0,67 s / 2,30 s |
+| Số lượt dưới 2 s | 7/8 (87,5%) |
+| Bỏ sót (đi vào khu mà không báo động) | 0 |
+
+**So với ước tính theo từng khâu.** Để biết độ trễ nằm chủ yếu ở đâu, nhóm ước tính thời gian của từng khâu trên đường đi từ camera tới ESP32 (Bảng 3.8).
+
+Bảng 3.8: Ước tính độ trễ theo từng khâu
+
+| Khâu | Ước tính | Cơ sở |
+| --- | --- | --- |
+| Camera chụp, nén MJPG, truyền USB, luồng đọc camera | 0,1–0,2 s | Giả định |
+| Chờ ảnh đầu tiên có người và YOLO xử lý ảnh đó | 0,13–0,27 s | 7,47 ảnh/giây đo trên Pi (mục 3.2.2) |
+| Luật cửa sổ: đủ 50% số ảnh thấy người trong cửa sổ 2 s | khoảng 1,0 s | ≈ p × T; điều kiện K_min = 5 ảnh chỉ cần khoảng 0,67 s nên điều kiện tỷ lệ p quyết định |
+| MQTT trong mạng nội bộ, ESP32 nhận bản tin | 0,01–0,05 s | |
+| **Tổng, tới lúc còi kêu** | **1,2–1,5 s** | Còi bật ngay khi ESP32 nhận `state` |
+| Đèn đỏ | thêm 0–0,5 s | Đèn nháy theo đồng hồ của ESP32 (sáng 0,5 s, tắt 0,5 s); bản tin tới đúng nửa tắt thì đèn phải chờ |
+
+Độ trễ trung bình đo được 1,31 giây nằm trong khoảng ước tính, nên không khâu nào chậm bất thường. Phần lớn độ trễ đến từ luật cửa sổ: trong cửa sổ 2 giây phải có ít nhất một nửa số ảnh thấy người, tức người phải được thấy liên tục khoảng p × T ≈ 1 giây. Thời gian suy luận của YOLO chỉ khoảng 0,1 giây mỗi ảnh. Vì vậy độ trễ do cấu hình cửa sổ quyết định, không do tốc độ mô hình: giảm T hoặc p thì báo nhanh hơn nhưng dễ báo giả hơn.
+
+Hai lượt lệch xa trung bình:
+
+- **Lượt 6 (2,30 s)**: có thể bản tin tới ESP32 đúng lúc đèn đang ở nửa tắt của nhịp nháy, khi đó còi có thể đã kêu từ khoảng 1,8 giây; hoặc YOLO bỏ sót vài ảnh lúc người đang đi.
+- **Lượt 5 (0,67 s)**, nhanh hơn mức khoảng 1 giây của luật cửa sổ: có thể tâm khung người đã sang khu 2 trước khi giữa thân qua băng dính (tay chân vung ra, hoặc người đứng sát vạch), nên cửa sổ đã có sẵn vài ảnh thấy người.
+
+**So với chỉ tiêu PCN1.** Độ trễ trung bình 1,31 giây và 7/8 lượt dưới 2 giây. Chỉ tiêu PCN1 yêu cầu 95% số lần thử dưới 2 giây. Với 8 lượt, muốn kết luận như vậy thì cả 8 lượt đều phải dưới 2 giây, nên kết quả hiện tại **chưa chứng minh được PCN1**. Mặt khác, số đo tính tới lúc đèn đỏ sáng là cận trên của độ trễ tới lúc còi kêu, thời điểm mà PCN1 dùng.
+
+Giới hạn của phép đo:
+
+- Chỉ có 8 lượt, ít hơn mức 10–15 lượt dự kiến, vì chỉ 8 lượt có video quay đủ cả hai thời điểm tA và tB. Các lượt đều do một người thực hiện, trong một buổi, một phòng, đi cùng một hướng từ khu 1 sang khu 2.
+- Video không ghi được thời điểm còi kêu nên phải đo tới đèn; nhịp nháy của đèn làm số đo dài thêm tới 0,5 giây.
+- tA được chọn bằng mắt theo giữa thân người, có thể lệch với tâm khung người mà YOLO tính.
+- Ở môi trường khác (người ở xa hơn, bị che, ánh sáng khác), mô hình bỏ sót nhiều ảnh hơn nên cần thêm thời gian mới đủ 50% số ảnh thấy người, và độ trễ sẽ tăng. Tăng T hoặc p để giảm báo giả cũng làm độ trễ tăng theo (≈ p × T). Khi triển khai ở nơi khác hoặc đổi tham số sau khi chọn trên val, cần đo lại tại chỗ.
 
 ### 3.5.3 Chạy liên tục và báo động giả
 
@@ -134,7 +193,7 @@ Mục đích của phép thử là đếm số lần báo động giả mỗi gi
 
 **Cách làm.** Ngày 23/11/2026, nhóm chạy `main.py` trong `tmux`, mỗi dòng log được gắn giờ và lưu ra file. Một phiên `tmux` khác ghi nhiệt độ CPU và cờ hạ xung mỗi phút. Phòng bật đèn, sinh hoạt bình thường; người trực ngồi gần ESP32, còi kêu thì xem ai đang ở khu cấm rồi bấm nút. Số sự kiện được đếm bằng bộ đếm `next_id` trong `state.json` lúc bắt đầu và lúc dừng, rồi đối chiếu từng mã với log. Sự kiện có người thật trong khu cấm không tính là báo giả. Giờ trên Pi đã đồng bộ NTP.
 
-Bảng 3.6: Kết quả chạy liên tục 6,4 giờ
+Bảng 3.9: Kết quả chạy liên tục 6,4 giờ
 
 | Mục | Kết quả |
 | --- | --- |
@@ -160,7 +219,7 @@ Trong một lần thử khác ngày 23/11, nhóm ghi nhận một lần báo đ�
 
 Nhóm thử 7 kịch bản sự cố trên phần cứng thật ngày 23/11/2026 với mô hình gốc. Mỗi kịch bản thử một lần; riêng K7 thử hai lần, lần đầu dừng chương trình bằng Ctrl+C, lần sau khởi động lại cả Pi bằng `sudo reboot`. Nhóm chỉ thử một lần vì các kịch bản như rút điện, khởi động lại lặp nhiều lần có nguy cơ làm hỏng thẻ nhớ của Pi. Bảng kết quả chỉ ghi những lần có log làm bằng chứng, và mã sự kiện ghi trong bảng phải khớp với bộ đếm `next_id` trong `state.json`. Các nhánh phụ không thử được trên phần cứng được kiểm bằng giả lập vòng lặp chính trên laptop hoặc bằng kiểm thử tự động.
 
-Bảng 3.7: Kết quả thử 7 kịch bản sự cố (23/11, mô hình gốc)
+Bảng 3.10: Kết quả thử 7 kịch bản sự cố (23/11, mô hình gốc)
 
 | Kịch bản | Mô tả | Kết quả đúng | Kết quả thử | Số đo |
 | --- | --- | --- | --- | --- |
@@ -186,13 +245,13 @@ Giới hạn của phép thử: mỗi kịch bản chỉ thử một lần nên 
 
 ## 3.6 Đánh giá chung
 
-[cần bổ sung sau khi có đủ số liệu 3.3, 3.5.1, 3.5.2. Dự kiến gồm: bảng đối chiếu từng yêu cầu ở Bảng 2.2 với kết quả đo và mức đạt; hạn chế của hệ thống; hướng phát triển]
+[cần bổ sung sau khi có đủ số liệu 3.3, 3.5.1. Dự kiến gồm: bảng đối chiếu từng yêu cầu ở Bảng 2.2 với kết quả đo và mức đạt; hạn chế của hệ thống; hướng phát triển]
 
-Bảng 3.8: Đối chiếu yêu cầu và kết quả (bản nháp)
+Bảng 3.11: Đối chiếu yêu cầu và kết quả (bản nháp)
 
 | Mã | Chỉ tiêu | Kết quả | Đạt |
 | --- | --- | --- | --- |
-| PCN1 | Độ trễ, 95% số lần dưới 2 s | [cần bổ sung] | [cần bổ sung] |
+| PCN1 | Độ trễ, 95% số lần dưới 2 s | Trung bình 1,31 s, 7/8 lượt dưới 2 s | Chưa chứng minh được (8 lượt, đo theo đèn) |
 | PCN2 | Recall tăng trên điều kiện khó | [cần bổ sung] | [cần bổ sung] |
 | PCN3 | Đo báo động giả mỗi giờ | 0 lần trong 6,4 giờ (≤ khoảng 0,47 lần/giờ, độ tin cậy 95%) | Đã đo |
 | PCN4 | 7 kịch bản sự cố | 8/8 lần thử đạt | Đạt |

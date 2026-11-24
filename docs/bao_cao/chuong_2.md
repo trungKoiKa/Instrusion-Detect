@@ -40,7 +40,7 @@ Bảng 2.2: Yêu cầu phi chức năng và cách kiểm chứng
 
 | Mã | Chỉ tiêu | Cách kiểm chứng |
 | --- | --- | --- |
-| PCN1 | Độ trễ từ lúc người bước vào khu cấm tới lúc còi kêu: 95% số lần thử dưới 2 giây | Quay slow-motion thấy cả vạch khu cấm và đèn ESP32, đếm số khung hình (mục 3.5.2) |
+| PCN1 | Độ trễ từ lúc người bước vào khu cấm tới lúc còi kêu: 95% số lần thử dưới 2 giây | Quay video 30 khung hình/giây thấy cả vạch khu cấm và đèn ESP32, đọc từng khung để lấy thời điểm (mục 3.5.2) |
 | PCN2 | Sau tinh chỉnh, recall tăng trên các điều kiện quan sát khó, cảnh bình thường không giảm | So mô hình gốc và mô hình tinh chỉnh trên tập test (mục 3.3) |
 | PCN3 | Đo được số lần báo động giả mỗi giờ khi chạy liên tục | Chạy nền nhiều giờ, đối chiếu từng sự kiện với người trực (mục 3.5.3) |
 | PCN4 | Xử lý đúng 7 kịch bản sự cố K1, K4, K5, K7, K10, K12, K13 | Thử trên phần cứng thật, có log (mục 3.5.4) |

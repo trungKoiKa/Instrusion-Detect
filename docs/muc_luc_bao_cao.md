@@ -87,7 +87,7 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 | 3.3 Huấn luyện và đánh giá mô hình: tập dữ liệu, kết quả 3 seed, so sánh gốc và fine-tune trên test, ảnh so sánh, phân tích lỗi | A | Kết quả trên val (18/11) trong `tom_tat_trao_doi.md`. **Thiếu:** phiên s07, kết quả trên test, notebook trong `ml/notebooks/` |
 | 3.4 Triển khai broker và trạm cảnh báo ESP32, bản tin MQTT thực tế | T | `deploy/mosquitto/`, `esp32/src/main.cpp`, `docs/mqtt.md`. **Thiếu:** ảnh chụp log MQTTX hoặc `mosquitto_sub` |
 | 3.5.1 Phát hiện ở mức sự kiện và chọn tham số T, K_min, p trên val | A | **Thiếu:** tham số đang để tạm (T = 2 s, K_min = 5, p = 0,5), chưa chọn trên val |
-| 3.5.2 Độ trễ cảnh báo | T | **Thiếu:** đo slow-motion 10–15 lần (đang làm 24/11) |
+| 3.5.2 Độ trễ cảnh báo | A | `docs/do_dac/do_tre.md`: 8 lượt, video 30 fps, trung bình 1,31 s, 7/8 dưới 2 s. **Thiếu:** khoảng cách người tới camera |
 | 3.5.3 Chạy liên tục và báo động giả | A | `docs/do_dac/chay_nen.md`: 6,4 giờ, 0 báo động giả |
 | 3.5.4 Kịch bản sự cố K1, K4, K5, K7, K10, K12, K13 | T | `docs/kich_ban_su_co.md`: 8/8 lần đạt |
 | 3.6 Đánh giá chung, hạn chế và hướng phát triển (bảng yêu cầu / kết quả đo / đạt hay không) | A + T | Lấy từ 3.2–3.5 |
