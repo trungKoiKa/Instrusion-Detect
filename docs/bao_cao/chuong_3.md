@@ -10,7 +10,7 @@ Hệ thống được lắp trong một phòng ở, camera đặt ở góc cửa
 
 ![Hình 3.1: Bố trí hiện trường: vị trí camera, vạch chia khu và trạm cảnh báo](hinh/h3_1_hien_truong.png)
 
-[cần bổ sung: ảnh hiện trường; ảnh khung hình có vẽ 4 khu và khung người (làm mờ mặt); kích thước phòng, khoảng cách từ camera tới tường đối diện]
+[cần bổ sung: ảnh hiện trường; ảnh chụp từ luồng hình (mục 2.3.5) có 4 khu và khung người, làm mờ mặt; kích thước phòng, khoảng cách từ camera tới tường đối diện]
 
 ### 3.1.2 Phần cứng và phần mềm
 
@@ -64,7 +64,25 @@ Bảng 3.3: Hiệu năng YOLO11n NCNN 320 px trên Raspberry Pi 4 (31/10)
 
 Bỏ qua 5 giây đầu, 99% số mẫu có FPS từ 7,38 trở lên và thời gian suy luận không quá 101,6 ms. Chỉ 9 trên 2.522 mẫu có FPS dưới 7; thấp nhất là 2,88 ở phút thứ 15, khi một lần suy luận kéo dài 301,7 ms. Nhóm chưa xác định nguyên nhân của lần chậm này, có thể do một tiến trình khác của hệ điều hành chạy cùng lúc. Một giây chậm như vậy chưa làm cửa sổ 2 giây thiếu ảnh: cửa sổ lúc đó vẫn còn khoảng 10 ảnh, trên mức tối thiểu n_min = 8. Xung nhịp giữ nguyên 1.800 MHz và cờ hạ xung luôn bằng `0x0` trong suốt thời gian đo, tức Pi không bị giảm hiệu năng vì nóng. Tốc độ khoảng 7,5 ảnh/giây cao gần gấp đôi mức tối thiểu 4 ảnh/giây mà tham số cửa sổ đòi hỏi (PCN5).
 
-Phép đo này có hai giới hạn. Thứ nhất, chỉ chạy riêng YOLO, chưa chạy đủ các thành phần (luồng camera, tính độ chi tiết ảnh, MQTT, ghi file). Thứ hai, phép đo dùng OpenCV 5.0, trong khi hệ thống chạy thật dùng OpenCV 4.14 (Bảng 3.2). Số liệu nhiệt độ trong 6,4 giờ chạy đầy đủ hệ thống (mục 3.5.3) bổ sung một phần cho giới hạn thứ nhất: nhiệt độ cao nhất 48,7 °C và không hạ xung. [cần bổ sung: đo lại bằng `bench_pi.py` khi `main.py` chạy đủ thành phần, hoặc giữ nguyên và ghi giới hạn]
+Phép đo này có hai giới hạn. Thứ nhất, chỉ chạy riêng YOLO, chưa chạy đủ các thành phần (luồng camera, tính độ chi tiết ảnh, MQTT, ghi file). Thứ hai, phép đo dùng OpenCV 5.0, trong khi hệ thống chạy thật dùng OpenCV 4.14 (Bảng 3.2). Hai giới hạn này được bù một phần: mục 3.2.3 đo tốc độ của chương trình chính khi chạy đủ thành phần với OpenCV 4.14, và trong 6,4 giờ chạy liên tục (mục 3.5.3) nhiệt độ cao nhất là 48,7 °C, không hạ xung. Các chỉ số CPU, RAM và thời gian suy luận thì chỉ có trong phép đo này.
+
+### 3.2.3 Ảnh hưởng của luồng hình tới tốc độ
+
+Luồng hình (mục 2.3.5) chạy trên cùng Raspberry Pi với YOLO, nên nhóm đo xem nó có làm hệ thống chậm đi không. Ngày 24–25/11/2026, nhóm chạy chương trình chính đầy đủ (camera, YOLO, 4 khu, MQTT) với mô hình gốc ba lần, mỗi lần 320 giây: lần A tắt luồng hình, lần B bật luồng hình nhưng không ai xem, lần C bật và có một laptop xem suốt lần đo. Chương trình in FPS mỗi 30 giây; giá trị đầu tiên, lúc đang mở camera, bị bỏ.
+
+Bảng 3.4: FPS của vòng lặp chính khi bật và tắt luồng hình (24–25/11, mô hình gốc)
+
+| Lần | Luồng hình | Laptop xem | FPS trung bình | FPS nhỏ nhất | Số giá trị | Nhiệt độ cuối (°C) | Hạ xung |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A | Tắt | – | 8,29 | 8,27 | 9 | 36,5 | Không |
+| B | Bật | Không | 8,28 | 8,24 | 9 | 32,6 | Không |
+| C | Bật | Có | 8,23 | 8,17 | 6 | 38,9 | Không |
+
+Bật luồng hình mà không ai xem thì FPS gần như không đổi (8,29 so với 8,28), đúng với thiết kế chỉ vẽ và nén ảnh khi có người xem. Khi có laptop xem, FPS giảm 0,06, khoảng 0,7%; giá trị nhỏ nhất 8,17 vẫn cao gấp đôi mức 4 ảnh/giây mà cửa sổ T giây cần (PCN5). Cả ba lần đều không hạ xung. Như vậy có thể bật luồng hình khi trình diễn mà không ảnh hưởng tới việc phát hiện.
+
+Trong lần C có người đi vào khu 2 và camera bị che hai lần. Lúc camera bị che, chương trình không chạy YOLO nên FPS tăng lên 8,72–10,58; điều này cho thấy YOLO là khâu chậm nhất của vòng lặp. Ba khoảng 30 giây có che camera được loại khỏi Bảng 3.4, nên lần C chỉ còn 6 giá trị. Việc laptop xem suốt lần C do người đo xác nhận, không có bản ghi kết nối trong lúc đo.
+
+FPS trong Bảng 3.4 là số ảnh vòng lặp chính xử lý được mỗi giây khi chạy đủ thành phần với OpenCV 4.14. Đại lượng này khác với số đo của `bench_pi.py` ở mục 3.2.2, và hai phép đo dùng hai phiên bản OpenCV khác nhau, nên không so trực tiếp hai con số. Giới hạn của phép đo: mỗi trường hợp chỉ đo một lần trong khoảng 5 phút, với một laptop xem, và cảnh trong lần C không đứng yên như hai lần còn lại.
 
 ## 3.3 Huấn luyện và đánh giá mô hình
 
@@ -76,7 +94,7 @@ Sau khi gán nhãn và loại 12 ảnh hỏng, bộ dữ liệu gồm 864 ảnh 
 
 ### 3.3.2 Kết quả huấn luyện trên tập val
 
-Bảng 3.4: Kết quả trên tập val (phiên s03, 18/11)
+Bảng 3.5: Kết quả trên tập val (phiên s03, 18/11)
 
 | Mô hình | mAP50 | mAP50-95 | Recall |
 | --- | --- | --- | --- |
@@ -93,7 +111,7 @@ Cần đọc các con số trên val một cách thận trọng. Mô hình gốc
 
 [cần bổ sung: chạy `model.val(split="test")` một lần cho mô hình gốc và mô hình tinh chỉnh sau khi có phiên s07]
 
-Bảng 3.5: Kết quả trên tập test (s05, s07)
+Bảng 3.6: Kết quả trên tập test (s05, s07)
 
 | Mô hình | Precision | Recall | mAP50 | mAP50-95 |
 | --- | --- | --- | --- | --- |
@@ -120,9 +138,13 @@ Ngày 23/11/2026, nhóm chạy lõi hệ thống đầu cuối trên phần cứ
 
 ## 3.5 Đánh giá hoạt động hệ thống
 
-### 3.5.1 Phát hiện ở mức sự kiện và chọn tham số trên tập val
+### 3.5.1 Tham số dùng trong thử nghiệm
 
-[cần bổ sung: chọn `conf`, T, K_min, p trên tập val (phiên s03); bảng các tổ hợp đã thử và tổ hợp được chọn; tỷ lệ bỏ sót sự kiện tương ứng. Nếu không kịp làm thì ghi rõ: mọi thử nghiệm dùng tham số tạm T = 2 s, K_min = 5, p = 0,5, n_min = 8, conf = 0,25]
+Mọi thử nghiệm ở mục 3.5 dùng cùng một bộ tham số ở Bảng 2.5: T = 2 s, K_min = 5, p = 0,5, n_min = 8 và conf = 0,25. Các giá trị này được đặt từ tốc độ đo được trên Pi (mục 2.3.4). Ở tốc độ 7,5–8,3 ảnh/giây (mục 3.2), cửa sổ 2 giây chứa khoảng 15–16 ảnh; K_min = 5 đòi người xuất hiện trong ít nhất khoảng 0,6–0,7 giây; n_min = 8 ứng với mức tối thiểu 4 ảnh/giây; conf = 0,25 là giá trị mặc định của Ultralytics.
+
+Nhóm giữ nguyên bộ tham số này, không chọn lại trên tập val như kế hoạch ban đầu. Lý do là ảnh trong tập val được chụp với nhịp 2 ảnh/giây, trong khi Pi xử lý khoảng 8 ảnh/giây. Luật cửa sổ đếm số ảnh trong T giây, nên chuỗi ảnh 2 ảnh/giây chỉ cho khoảng 4 ảnh trong cửa sổ 2 giây, ít hơn n_min, và không mô phỏng đúng các giá trị n, k mà Pi thấy khi chạy thật. Ngưỡng conf ảnh hưởng trực tiếp tới k, nên cũng được giữ cùng bộ.
+
+Với bộ tham số này, hệ thống chạy liên tục 6,4 giờ không có báo động giả, và ba lần YOLO thấy người trong vài ảnh đều chỉ dừng ở trạng thái nghi ngờ (mục 3.5.3); độ trễ cảnh báo trung bình 1,31 giây, 7/8 lượt dưới 2 giây (mục 3.5.2). Như vậy, tại nơi thử nghiệm, bộ tham số tạm vừa chặn được các lần thấy người thoáng qua, vừa giữ độ trễ quanh mức 1,3 giây. Đây chưa phải bộ tham số tốt nhất, mà là bộ được chọn theo kinh nghiệm: tăng T hoặc p làm giảm báo giả nhưng tăng độ trễ (độ trễ xấp xỉ p × T), và ngược lại. Việc chọn tham số trên dữ liệu ghi đúng tốc độ của Pi được đưa vào hướng phát triển (mục 3.6.3).
 
 ### 3.5.2 Độ trễ cảnh báo
 
@@ -135,7 +157,7 @@ Phép đo này xác định thời gian từ lúc người bước vào khu cấ
 
 Độ trễ của mỗi lượt là tB − tA. Mỗi thời điểm lệch tối đa một khung hình (1/30 giây), nên sai số mỗi lượt khoảng ±0,07 giây, nhỏ so với mức 2 giây của chỉ tiêu. Log có gắn giờ của `main.py` được dùng để kiểm tra mỗi lượt đều có báo động và xác nhận. Phép đo dùng mô hình gốc và các tham số tạm ở Bảng 2.5: conf = 0,25, T = 2 s, K_min = 5, p = 0,5, n_min = 8, khu cấm 2 và 3. [cần bổ sung: khoảng cách từ người tới camera lúc thử]
 
-Bảng 3.6: Độ trễ cảnh báo của 8 lượt đo (24/11, mô hình gốc)
+Bảng 3.7: Độ trễ cảnh báo của 8 lượt đo (24/11, mô hình gốc)
 
 | Lượt | tA (phút:giây) | tB (phút:giây) | Độ trễ (s) |
 | --- | --- | --- | --- |
@@ -148,7 +170,7 @@ Bảng 3.6: Độ trễ cảnh báo của 8 lượt đo (24/11, mô hình gốc)
 | 7 | 1:33,008 | 1:34,234 | 1,23 |
 | 8 | 1:48,909 | 1:50,376 | 1,47 |
 
-Bảng 3.7: Tổng hợp độ trễ cảnh báo
+Bảng 3.8: Tổng hợp độ trễ cảnh báo
 
 | Chỉ số | Giá trị |
 | --- | --- |
@@ -158,9 +180,9 @@ Bảng 3.7: Tổng hợp độ trễ cảnh báo
 | Số lượt dưới 2 s | 7/8 (87,5%) |
 | Bỏ sót (đi vào khu mà không báo động) | 0 |
 
-**So với ước tính theo từng khâu.** Để biết độ trễ nằm chủ yếu ở đâu, nhóm ước tính thời gian của từng khâu trên đường đi từ camera tới ESP32 (Bảng 3.8).
+**So với ước tính theo từng khâu.** Để biết độ trễ nằm chủ yếu ở đâu, nhóm ước tính thời gian của từng khâu trên đường đi từ camera tới ESP32 (Bảng 3.9).
 
-Bảng 3.8: Ước tính độ trễ theo từng khâu
+Bảng 3.9: Ước tính độ trễ theo từng khâu
 
 | Khâu | Ước tính | Cơ sở |
 | --- | --- | --- |
@@ -185,7 +207,7 @@ Giới hạn của phép đo:
 - Chỉ có 8 lượt, ít hơn mức 10–15 lượt dự kiến, vì chỉ 8 lượt có video quay đủ cả hai thời điểm tA và tB. Các lượt đều do một người thực hiện, trong một buổi, một phòng, đi cùng một hướng từ khu 1 sang khu 2.
 - Video không ghi được thời điểm còi kêu nên phải đo tới đèn; nhịp nháy của đèn làm số đo dài thêm tới 0,5 giây.
 - tA được chọn bằng mắt theo giữa thân người, có thể lệch với tâm khung người mà YOLO tính.
-- Ở môi trường khác (người ở xa hơn, bị che, ánh sáng khác), mô hình bỏ sót nhiều ảnh hơn nên cần thêm thời gian mới đủ 50% số ảnh thấy người, và độ trễ sẽ tăng. Tăng T hoặc p để giảm báo giả cũng làm độ trễ tăng theo (≈ p × T). Khi triển khai ở nơi khác hoặc đổi tham số sau khi chọn trên val, cần đo lại tại chỗ.
+- Ở môi trường khác (người ở xa hơn, bị che, ánh sáng khác), mô hình bỏ sót nhiều ảnh hơn nên cần thêm thời gian mới đủ 50% số ảnh thấy người, và độ trễ sẽ tăng. Tăng T hoặc p để giảm báo giả cũng làm độ trễ tăng theo (≈ p × T). Khi triển khai ở nơi khác hoặc đổi tham số cửa sổ, cần đo lại tại chỗ.
 
 ### 3.5.3 Chạy liên tục và báo động giả
 
@@ -193,7 +215,7 @@ Mục đích của phép thử là đếm số lần báo động giả mỗi gi
 
 **Cách làm.** Ngày 23/11/2026, nhóm chạy `main.py` trong `tmux`, mỗi dòng log được gắn giờ và lưu ra file. Một phiên `tmux` khác ghi nhiệt độ CPU và cờ hạ xung mỗi phút. Phòng bật đèn, sinh hoạt bình thường; người trực ngồi gần ESP32, còi kêu thì xem ai đang ở khu cấm rồi bấm nút. Số sự kiện được đếm bằng bộ đếm `next_id` trong `state.json` lúc bắt đầu và lúc dừng, rồi đối chiếu từng mã với log. Sự kiện có người thật trong khu cấm không tính là báo giả. Giờ trên Pi đã đồng bộ NTP.
 
-Bảng 3.9: Kết quả chạy liên tục 6,4 giờ
+Bảng 3.10: Kết quả chạy liên tục 6,4 giờ
 
 | Mục | Kết quả |
 | --- | --- |
@@ -219,7 +241,7 @@ Trong một lần thử khác ngày 23/11, nhóm ghi nhận một lần báo đ�
 
 Nhóm thử 7 kịch bản sự cố trên phần cứng thật ngày 23/11/2026 với mô hình gốc. Mỗi kịch bản thử một lần; riêng K7 thử hai lần, lần đầu dừng chương trình bằng Ctrl+C, lần sau khởi động lại cả Pi bằng `sudo reboot`. Nhóm chỉ thử một lần vì các kịch bản như rút điện, khởi động lại lặp nhiều lần có nguy cơ làm hỏng thẻ nhớ của Pi. Bảng kết quả chỉ ghi những lần có log làm bằng chứng, và mã sự kiện ghi trong bảng phải khớp với bộ đếm `next_id` trong `state.json`. Các nhánh phụ không thử được trên phần cứng được kiểm bằng giả lập vòng lặp chính trên laptop hoặc bằng kiểm thử tự động.
 
-Bảng 3.10: Kết quả thử 7 kịch bản sự cố (23/11, mô hình gốc)
+Bảng 3.11: Kết quả thử 7 kịch bản sự cố (23/11, mô hình gốc)
 
 | Kịch bản | Mô tả | Kết quả đúng | Kết quả thử | Số đo |
 | --- | --- | --- | --- | --- |
@@ -241,7 +263,7 @@ Kết quả: 8/8 lần thử đạt. Một số quan sát rút ra từ các lầ
 
 Các nhánh phụ đã kiểm bằng giả lập hoặc kiểm thử tự động: K1 khi bỏ che lúc người vẫn còn trong khu (sự kiện phải giữ ở trạng thái đã xác nhận cho tới khi người rời khu); K12 khi cắm lại cáp trước lúc bấm nút; K13 ở các thời điểm đổi trạng thái khác, qua các ca kiểm thử trong `pi/tests/test_persistence.py` như ghi bị ngắt giữa chừng thì file cũ còn nguyên, file hỏng không làm dừng chương trình, khôi phục đúng từng trạng thái.
 
-Giới hạn của phép thử: mỗi kịch bản chỉ thử một lần nên chưa có số liệu thống kê; số đo thời gian ở K4 được ước lượng bằng đồng hồ, độ trễ chính thức đo riêng ở mục 3.5.2. Lần thử K5 chỉ lưu được log Serial của ESP32 tới dòng `Mat WiFi` [cần bổ sung: một lần thử K5 lưu đủ log Serial từ lúc bấm nút tới lúc nhận `state` đã xác nhận].
+Giới hạn của phép thử: mỗi kịch bản chỉ thử một lần nên chưa có số liệu thống kê; số đo thời gian ở K4 được ước lượng bằng đồng hồ, độ trễ chính thức đo riêng ở mục 3.5.2. Lần thử K5 chỉ lưu được log Serial của ESP32 tới dòng `Mat WiFi`.
 
 ## 3.6 Đánh giá chung
 
@@ -249,7 +271,7 @@ Mục này đối chiếu kết quả đo ở các mục 3.2 đến 3.5 với c�
 
 ### 3.6.1 Đối chiếu với các yêu cầu
 
-Bảng 3.11: Đối chiếu yêu cầu và kết quả
+Bảng 3.12: Đối chiếu yêu cầu và kết quả
 
 | Mã | Chỉ tiêu | Kết quả | Đạt |
 | --- | --- | --- | --- |
@@ -257,12 +279,12 @@ Bảng 3.11: Đối chiếu yêu cầu và kết quả
 | PCN2 | Recall tăng trên điều kiện khó | [cần bổ sung] | [cần bổ sung] |
 | PCN3 | Đo báo động giả mỗi giờ | 0 lần trong 6,4 giờ (≤ khoảng 0,47 lần/giờ, độ tin cậy 95%) | Đã đo |
 | PCN4 | 7 kịch bản sự cố | 8/8 lần thử đạt | Đạt |
-| PCN5 | ≥ 4 ảnh/giây, không hạ xung | 7,47 ảnh/giây (chỉ YOLO); không hạ xung trong 45 phút đo và 6,4 giờ chạy | Đạt |
+| PCN5 | ≥ 4 ảnh/giây, không hạ xung | 7,47 ảnh/giây khi chỉ chạy YOLO; thấp nhất 8,17 ảnh/giây khi chạy đủ chương trình; không hạ xung trong 45 phút đo và 6,4 giờ chạy | Đạt |
 | PCN6 | Hoạt động khi không có Internet | [cần bổ sung: thử rút WAN] | [cần bổ sung] |
 | PCN7 | Tài khoản và phân quyền broker | [cần bổ sung: kết quả thử quyền] | [cần bổ sung] |
 | PCN8 | Mất điện không hỏng file trạng thái | K13 đạt, kiểm thử tự động đạt | Đạt |
 
-Các yêu cầu về độ tin cậy khi có sự cố (PCN4, PCN8) và về tài nguyên của Raspberry Pi (PCN5) đã đạt. Với PCN5, tốc độ 7,47 ảnh/giây gần gấp đôi mức tối thiểu 4 ảnh/giây, và nhiệt độ không vượt 51,1 °C khi có tản nhiệt và quạt. Yêu cầu PCN3 chỉ đòi hỏi đo được số báo động giả mỗi giờ; phép đo cho kết quả 0 lần trong 6,4 giờ, nhưng chỉ đủ kết luận tỷ lệ không quá khoảng 0,47 lần/giờ. Với PCN1, độ trễ trung bình 1,31 giây thấp hơn mức 2 giây, nhưng 8 lượt đo chưa đủ để khẳng định 95% số lần dưới 2 giây, và có một lượt 2,30 giây. Độ trễ này chủ yếu do luật cửa sổ T giây quyết định, nên có thể điều chỉnh qua T và p, đổi lại hệ thống dễ báo giả hơn.
+Các yêu cầu về độ tin cậy khi có sự cố (PCN4, PCN8) và về tài nguyên của Raspberry Pi (PCN5) đã đạt. Với PCN5, tốc độ 7,47 ảnh/giây gần gấp đôi mức tối thiểu 4 ảnh/giây; chương trình chính chạy đủ thành phần đạt 8,2–8,3 ảnh/giây, kể cả khi bật luồng hình; nhiệt độ không vượt 51,1 °C khi có tản nhiệt và quạt. Yêu cầu PCN3 chỉ đòi hỏi đo được số báo động giả mỗi giờ; phép đo cho kết quả 0 lần trong 6,4 giờ, nhưng chỉ đủ kết luận tỷ lệ không quá khoảng 0,47 lần/giờ. Với PCN1, độ trễ trung bình 1,31 giây thấp hơn mức 2 giây, nhưng 8 lượt đo chưa đủ để khẳng định 95% số lần dưới 2 giây, và có một lượt 2,30 giây. Độ trễ này chủ yếu do luật cửa sổ T giây quyết định, nên có thể điều chỉnh qua T và p, đổi lại hệ thống dễ báo giả hơn.
 
 [cần bổ sung: nhận xét PCN2 sau khi có kết quả trên tập test (mục 3.3.3); PCN6, PCN7 sau khi thử rút dây WAN và thử phân quyền broker]
 
@@ -272,24 +294,24 @@ Các hạn chế của hệ thống:
 
 - **Khu cấm theo hướng nhìn.** Mỗi khu là một dải dọc của khung hình, ứng với một hướng nhìn từ camera chứ không phải một vùng trên sàn (mục 2.3.3). Hệ thống chỉ phù hợp khi khu cấm nằm về một phía của căn phòng theo hướng nhìn của camera. Người đứng sát ranh giới hai khu có thể bị xếp sang khu bên cạnh, vì tay chân vung ra làm lệch tâm khung người.
 - **Mô hình và dữ liệu.** Dữ liệu tinh chỉnh được chụp trong một phòng, ở hai vị trí đặt camera, trong hai ngày; tập test chỉ có hai phiên. Hệ thống không được thiết kế cho điều kiện thiếu sáng. Mọi thử nghiệm trên phần cứng ở mục 3.5 dùng mô hình gốc, chưa dùng mô hình tinh chỉnh.
-- **Tham số cửa sổ.** Các thử nghiệm dùng tham số tạm T = 2 s, K_min = 5, p = 0,5, n_min = 8, conf = 0,25 [cần bổ sung: cập nhật sau mục 3.5.1]. Bộ tham số này quyết định cả số báo động giả lẫn độ trễ cảnh báo, nên cần chọn lại theo từng nơi lắp đặt.
+- **Tham số cửa sổ.** Các thử nghiệm dùng tham số tạm T = 2 s, K_min = 5, p = 0,5, n_min = 8, conf = 0,25, chọn theo kinh nghiệm và chưa được tối ưu (mục 3.5.1). Bộ tham số này quyết định cả số báo động giả lẫn độ trễ cảnh báo, nên cần chọn lại theo từng nơi lắp đặt.
 - **Giám sát camera.** Phương pháp dựa trên độ chi tiết ảnh không phát hiện được vật che mỏng hoặc che một phần, và có thể coi người đứng sát camera là camera bị che. Hệ thống chưa phát hiện được camera bị che ngắn nhưng lặp lại nhiều lần, camera bị mờ hay bị xoay hướng. Người đã ở trong khu cấm từ lúc chương trình khởi động được báo kèm nhãn "xâm nhập sau mất quan sát".
-- **Vận hành.** Chương trình chưa được cài thành dịch vụ tự chạy khi Raspberry Pi khởi động và chưa có watchdog tự khởi động lại khi chương trình treo; sau mỗi lần Pi khởi động lại phải chạy tay. Raspberry Pi 4 không có đồng hồ thời gian thực, nên nếu khởi động lúc router không có Internet thì giờ trong log và bản tin có thể sai cho tới khi đồng bộ được. Hệ thống chưa lưu ảnh bằng chứng khi có cảnh báo. Khi Pi tắt hẳn mà WiFi vẫn còn, đèn của trạm ESP32 ngừng nháy vài giây mỗi lần thử kết nối lại broker (mục 2.6.5).
-- **Bảo mật.** Broker yêu cầu tài khoản và phân quyền theo topic, nhưng kết nối MQTT chưa mã hóa bằng TLS, nên mật khẩu và bản tin đi dưới dạng rõ trong mạng nội bộ. Hệ thống dựa vào việc mạng WiFi nội bộ được bảo vệ bằng mật khẩu riêng.
+- **Vận hành.** Chương trình chưa được cài thành dịch vụ tự chạy khi Raspberry Pi khởi động và chưa có watchdog tự khởi động lại khi chương trình treo; sau mỗi lần Pi khởi động lại phải chạy tay. Raspberry Pi 4 không có đồng hồ thời gian thực, nên nếu khởi động lúc router không có Internet thì giờ trong log và bản tin có thể sai cho tới khi đồng bộ được. Hệ thống chưa lưu ảnh bằng chứng khi có cảnh báo, và log của chương trình mới chỉ in ra màn hình, chưa được ghi ra file theo kiểu ghi vòng để giới hạn dung lượng trên thẻ nhớ. Khi Pi tắt hẳn mà WiFi vẫn còn, đèn của trạm ESP32 ngừng nháy vài giây mỗi lần thử kết nối lại broker (mục 2.6.5).
+- **Bảo mật.** Broker yêu cầu tài khoản và phân quyền theo topic, nhưng kết nối MQTT chưa mã hóa bằng TLS, nên mật khẩu và bản tin đi dưới dạng rõ trong mạng nội bộ. Luồng hình xem trên laptop cũng không yêu cầu mật khẩu. Hệ thống dựa vào việc mạng WiFi nội bộ được bảo vệ bằng mật khẩu riêng.
 
 Các hạn chế của phép đánh giá:
 
 - Mỗi kịch bản sự cố chỉ thử một lần (K7 hai lần), chưa có số liệu thống kê.
 - Chạy liên tục 6,4 giờ trong một buổi tối, ít người qua lại.
 - Độ trễ đo 8 lượt, một người, một hướng đi, đo tới lúc đèn sáng thay cho lúc còi kêu.
-- Hiệu năng được đo khi chỉ chạy YOLO, với OpenCV 5.0, chưa đo khi chạy đủ mọi thành phần.
+- Các chỉ số CPU, RAM và thời gian suy luận chỉ đo khi chạy riêng YOLO, với OpenCV 5.0; khi chạy đủ thành phần mới đo FPS của vòng lặp chính, mỗi trường hợp một lần trong khoảng 5 phút.
 
 ### 3.6.3 Hướng phát triển
 
-- **Hoàn thiện đánh giá.** Thử thêm các kịch bản sự cố chưa làm: K2 (đã xác nhận, người còn trong khu, che camera vài phút rồi bỏ che), K3 (che camera ngắn lặp lại trong lúc người đi vào), K6 (mất kết nối, bấm nút, trong lúc đó có sự kiện mới), K8 (khởi động lại Pi rồi che camera ngay), K9 (khởi động lại khi không có Internet), K11 (vòng lặp YOLO treo trong khi MQTT vẫn chạy). Chạy liên tục 24 giờ ở nhiều thời điểm trong ngày; đo độ trễ nhiều lượt hơn, nhiều hướng đi, đo tới lúc còi kêu.
+- **Hoàn thiện đánh giá.** Thử thêm các kịch bản sự cố chưa làm: K2 (đã xác nhận, người còn trong khu, che camera vài phút rồi bỏ che), K3 (che camera ngắn lặp lại trong lúc người đi vào), K6 (mất kết nối, bấm nút, trong lúc đó có sự kiện mới), K8 (khởi động lại Pi rồi che camera ngay), K9 (khởi động lại khi không có Internet), K11 (vòng lặp YOLO treo trong khi MQTT vẫn chạy). Chạy liên tục 24 giờ ở nhiều thời điểm trong ngày; đo độ trễ nhiều lượt hơn, nhiều hướng đi, đo tới lúc còi kêu. Ghi chuỗi ảnh hoặc kết quả YOLO của từng ảnh ở đúng tốc độ của Pi tại nơi lắp đặt, rồi chọn T, K_min, p và conf trên dữ liệu đó làm tập val, không chọn trên tập test.
 - **Mô hình.** Thu thêm dữ liệu ở nhiều phòng, nhiều ngày; thử ảnh đầu vào 416 điểm ảnh cho người ở xa; thử khóa phần xương sống khi tinh chỉnh; thử các thế hệ YOLO mới hơn như YOLO26n.
-- **Chức năng.** Chế độ bật, tắt canh gác theo lịch, cần thêm mô-đun đồng hồ thời gian thực DS3231; phát hiện camera bị mờ hoặc bị xoay hướng; lưu ảnh bằng chứng và tự xóa sau một số ngày; gửi thông báo qua Telegram khi có Internet; giao cho ba nút còn lại của trạm ESP32 các chức năng riêng.
-- **Vận hành và bảo mật.** Cài chương trình thành dịch vụ systemd có watchdog; mã hóa kết nối MQTT bằng TLS; nếu lắp được camera nhìn chéo xuống sàn thì chuyển từ 4 khu dọc sang vùng đa giác trên sàn xét theo điểm chân của người, mà không phải đổi các phần khác của hệ thống.
+- **Chức năng.** Chế độ bật, tắt canh gác theo lịch, cần thêm mô-đun đồng hồ thời gian thực DS3231; phát hiện camera bị mờ hoặc bị xoay hướng; lưu ảnh bằng chứng và tự xóa sau một số ngày; ghi log ra file theo kiểu ghi vòng; gửi thông báo qua Telegram khi có Internet; giao cho ba nút còn lại của trạm ESP32 các chức năng riêng.
+- **Vận hành và bảo mật.** Cài chương trình thành dịch vụ systemd có watchdog; mã hóa kết nối MQTT bằng TLS và thêm mật khẩu cho luồng hình; nếu lắp được camera nhìn chéo xuống sàn thì chuyển từ 4 khu dọc sang vùng đa giác trên sàn xét theo điểm chân của người, mà không phải đổi các phần khác của hệ thống.
 
 ## 3.7 Kết luận chương 3
 

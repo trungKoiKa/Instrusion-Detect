@@ -53,6 +53,7 @@ Bìa · Trang lót · Đề cương · Bảng phân công công việc · Lời 
   - 2.3.2 Mô-đun phát hiện YOLO11n NCNN 320 px
   - 2.3.3 Vùng quan tâm (ROI) dạng 4 khu dọc: lý do chọn, giới hạn
   - 2.3.4 Điều kiện xác định xâm nhập theo cửa sổ T giây (K_min, p, n_min) và tạo sự kiện
+  - 2.3.5 Luồng hình theo dõi trên máy tính (`stream.py`, MJPEG)
 - 2.4 Dữ liệu và quy trình tinh chỉnh mô hình (A)
   - 2.4.1 Các điều kiện quan sát khó cần cải thiện
   - 2.4.2 Thu thập dữ liệu theo phiên
@@ -83,10 +84,10 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 | Mục | Người viết | Bằng chứng |
 | --- | --- | --- |
 | 3.1 Mô hình thực nghiệm: bố trí hiện trường, vạch khu, phần cứng, phần mềm | A + T | Cấu hình trong `config/`. **Thiếu:** ảnh hiện trường, ảnh bo ESP32 |
-| 3.2 Triển khai trên Raspberry Pi: chương trình chính, đo hiệu năng (FPS, CPU, RAM, nhiệt độ, hạ xung) | A | `logs/bench_20261031_235817.csv` (45 phút, YOLO riêng, OpenCV 5.0) và biểu đồ PNG; nhiệt độ lúc chạy nền 6,4 giờ |
+| 3.2 Triển khai trên Raspberry Pi: chương trình chính, đo hiệu năng (FPS, CPU, RAM, nhiệt độ, hạ xung) | A | `logs/bench_20261031_235817.csv` (45 phút, YOLO riêng, OpenCV 5.0) và biểu đồ PNG; nhiệt độ lúc chạy nền 6,4 giờ; 3.2.3 FPS `main.py` khi bật/tắt stream (`docs/do_dac/stream_fps.md`) |
 | 3.3 Huấn luyện và đánh giá mô hình: tập dữ liệu, kết quả 3 seed, so sánh gốc và fine-tune trên test, ảnh so sánh, phân tích lỗi | A | Kết quả trên val (18/11) trong `tom_tat_trao_doi.md`. **Thiếu:** phiên s07, kết quả trên test, notebook trong `ml/notebooks/` |
 | 3.4 Triển khai broker và trạm cảnh báo ESP32, bản tin MQTT thực tế | T | `deploy/mosquitto/`, `esp32/src/main.cpp`, `docs/mqtt.md`. **Thiếu:** ảnh chụp log MQTTX hoặc `mosquitto_sub` |
-| 3.5.1 Phát hiện ở mức sự kiện và chọn tham số T, K_min, p trên val | A | **Thiếu:** tham số đang để tạm (T = 2 s, K_min = 5, p = 0,5), chưa chọn trên val |
+| 3.5.1 Tham số dùng trong thử nghiệm | A | Đã viết (nhóm chốt 25/11): giữ tham số tạm T = 2 s, K_min = 5, p = 0,5, n_min = 8, conf = 0,25, vì ảnh val 2 ảnh/giây không mô phỏng đúng Pi ~8 FPS; chọn trên val chuyển sang hướng phát triển |
 | 3.5.2 Độ trễ cảnh báo | A | `docs/do_dac/do_tre.md`: 8 lượt, video 30 fps, trung bình 1,31 s, 7/8 dưới 2 s. **Thiếu:** khoảng cách người tới camera |
 | 3.5.3 Chạy liên tục và báo động giả | A | `docs/do_dac/chay_nen.md`: 6,4 giờ, 0 báo động giả |
 | 3.5.4 Kịch bản sự cố K1, K4, K5, K7, K10, K12, K13 | T | `docs/kich_ban_su_co.md`: 8/8 lần đạt |
@@ -108,5 +109,6 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 - Chạy nền một buổi tối, ít người qua lại: 0 lần trong 6,4 giờ chỉ cho biết tỷ lệ báo giả thật không quá khoảng 0,47 lần/giờ (độ tin cậy 95%).
 - Dữ liệu chụp trong một phòng, hai vị trí camera; tập test chỉ có hai phiên.
 - Độ trễ đo 8 lượt, một người, một hướng đi, đo tới đèn (cận trên của còi): chưa chứng minh được 95% dưới 2 s.
-- Số đo hiệu năng ngày 31/10 chỉ chạy YOLO, chưa chạy đủ mọi thành phần, và dùng OpenCV 5.0 (bản hiện đã chặn).
-- Chưa có `safecam.service` (tự chạy khi cắm điện, watchdog), chưa có `stream.py`: không viết như đã làm.
+- Số đo hiệu năng ngày 31/10 chỉ chạy YOLO, chưa chạy đủ mọi thành phần, và dùng OpenCV 5.0 (bản hiện đã chặn). Khi chạy đủ thành phần chỉ có FPS của `main.py` (`stream_fps.md`, mỗi trường hợp một lần 5 phút).
+- Tham số cửa sổ chọn theo kinh nghiệm, không chọn trên val.
+- Chưa có `safecam.service` (tự chạy khi cắm điện, watchdog), chưa có ảnh bằng chứng và log ghi vòng: không viết như đã làm.

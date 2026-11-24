@@ -59,7 +59,7 @@ Hệ thống gồm bốn thiết bị: webcam Logitech C270, Raspberry Pi 4, rou
 
 ![Hình 2.1: Sơ đồ khối tổng thể hệ thống](hinh/h2_1_so_do_khoi.png)
 
-Camera cắm vào Raspberry Pi qua cổng USB. Mọi xử lý hình ảnh diễn ra trên Pi: đọc camera, chạy YOLO, xét khu cấm, giữ trạng thái và lưu file. Broker MQTT Mosquitto cũng chạy ngay trên Pi. Pi và ESP32 cùng nối vào một router WiFi; router chỉ làm nhiệm vụ chuyển gói tin trong mạng nội bộ, không cần nối Internet. Laptop chỉ dùng khi phát triển và thử nghiệm, để xem bản tin bằng MQTTX và đăng nhập SSH vào Pi.
+Camera cắm vào Raspberry Pi qua cổng USB. Mọi xử lý hình ảnh diễn ra trên Pi: đọc camera, chạy YOLO, xét khu cấm, giữ trạng thái và lưu file. Broker MQTT Mosquitto cũng chạy ngay trên Pi. Pi và ESP32 cùng nối vào một router WiFi; router chỉ làm nhiệm vụ chuyển gói tin trong mạng nội bộ, không cần nối Internet. Laptop chỉ dùng khi phát triển, thử nghiệm và trình diễn: xem bản tin bằng MQTTX, đăng nhập SSH vào Pi và xem luồng hình từ camera (mục 2.3.5).
 
 Chương trình trên Pi được chia thành các mô-đun nhỏ, mỗi mô-đun một việc, để kiểm thử riêng được trên laptop mà không cần camera hay mạng. Bảng 2.3 liệt kê các mô-đun trong thư mục `pi/safecam/`.
 
@@ -75,9 +75,10 @@ Bảng 2.3: Các mô-đun chương trình trên Raspberry Pi
 | `outputs.py` | Chọn đèn, còi theo bảng ưu tiên, tạo nội dung bản tin |
 | `persistence.py` | Ghi và đọc file trạng thái an toàn khi mất điện |
 | `mqtt_client.py` | Kết nối broker, gửi `state`, `event`, `hb`, nhận ACK |
+| `stream.py` | Phát luồng hình có vẽ khu và khung người để xem trên laptop, bật hoặc tắt trong cấu hình |
 | `main.py` | Vòng lặp chính nối các mô-đun trên |
 
-Các mô-đun có logic quyết định (`zones`, `intrusion`, `observation`, `outputs`, `persistence`, `mqtt_client`) đều có kiểm thử tự động bằng pytest trong `pi/tests/`, tổng cộng 78 ca kiểm thử, chạy trên laptop trong khoảng 2 giây.
+Các mô-đun có logic quyết định (`zones`, `intrusion`, `observation`, `outputs`, `persistence`, `mqtt_client`) và hàm vẽ của `stream` đều có kiểm thử tự động bằng pytest trong `pi/tests/`, tổng cộng 83 ca kiểm thử, chạy trên laptop trong vài giây.
 
 ### 2.2.2 Luồng dữ liệu
 
@@ -135,7 +136,7 @@ Mô-đun `detector.py` nạp mô hình YOLO11n đã xuất sang định dạng N
 
 - `imgsz=320`: Ultralytics tự thu ảnh về cạnh 320 điểm ảnh trước khi đưa vào mạng.
 - `classes=[0]`: chỉ giữ lớp người (lớp số 0 trong bộ COCO).
-- `conf=0.25`: ngưỡng tin cậy. Đây là giá trị tạm; ngưỡng chính thức sẽ chọn trên tập val cùng các tham số cửa sổ (mục 3.5.1).
+- `conf=0.25`: ngưỡng tin cậy, bằng giá trị mặc định của Ultralytics khi dự đoán. Nhóm giữ giá trị này cho mọi thử nghiệm (mục 3.5.1).
 
 Kết quả trả về là danh sách người, mỗi người gồm tọa độ khung `(x1, y1, x2, y2)` trên ảnh gốc và độ tin cậy. Mô-đun tính thêm tâm ngang của khung `cx = (x1 + x2) / 2` để dùng cho việc xác định khu. Lần chạy đầu tiên của mô hình luôn chậm hơn hẳn các lần sau, nên mô-đun chạy thử một lần trên ảnh đen ngay khi nạp, để lần đầu này không rơi vào lúc hệ thống đang canh gác.
 
@@ -174,9 +175,19 @@ Bảng 2.5: Tham số cửa sổ thời gian đang dùng
 | n_min | 8 | Số ảnh tối thiểu để được kết luận |
 | conf | 0,25 | Ngưỡng tin cậy của YOLO |
 
-Các giá trị trong Bảng 2.5 là giá trị tạm, dùng cho mọi thử nghiệm ở chương 3. Theo kế hoạch, nhóm chọn lại chúng trên tập val chứ không trên tập test [cần bổ sung: kết quả chọn tham số trên val, mục 3.5.1]. Để hình dung: với tốc độ khoảng 7,5 ảnh/giây đo được trên Pi, cửa sổ 2 giây chứa khoảng 15 ảnh; K_min = 5 nghĩa là người phải xuất hiện trong ít nhất 5 ảnh, tương đương khoảng 0,7 giây trong cửa sổ. Người chỉ thoáng qua mép khu cấm sẽ ở trạng thái nghi ngờ rồi trở về bình thường mà không gây báo động.
+Các giá trị trong Bảng 2.5 được nhóm đặt dựa trên tốc độ đo được của Pi và dùng cho mọi thử nghiệm ở chương 3; lý do giữ nguyên các giá trị này được trình bày ở mục 3.5.1. Để hình dung: với tốc độ khoảng 7,5 ảnh/giây đo được trên Pi, cửa sổ 2 giây chứa khoảng 15 ảnh; K_min = 5 nghĩa là người phải xuất hiện trong ít nhất 5 ảnh, tương đương khoảng 0,7 giây trong cửa sổ. Người chỉ thoáng qua mép khu cấm sẽ ở trạng thái nghi ngờ rồi trở về bình thường mà không gây báo động. Còn n_min = 8 trong cửa sổ 2 giây ứng với tốc độ tối thiểu 4 ảnh/giây, chính là mức yêu cầu ở PCN5.
 
 Mỗi khu cấm có cửa sổ riêng. Nếu dùng chung một cửa sổ cho cả khu 2 và 3, một người đi dọc ranh giới giữa hai khu có thể bị cộng dồn số lần thấy từ cả hai phía. Dù vậy, hệ thống chỉ giữ **một** sự kiện xâm nhập: khi khu 2 báo động rồi khu 3 cũng báo động, sự kiện đang mở được bổ sung khu 3 vào danh sách khu, không mở sự kiện thứ hai. Cách này giữ máy trạng thái đơn giản, người trực chỉ cần bấm nút một lần.
+
+### 2.3.5 Luồng hình theo dõi trên máy tính
+
+Khi trình diễn và khi lắp đặt, người vận hành cần thấy Raspberry Pi đang nhìn gì: khu cấm nằm ở đâu trên khung hình, YOLO có thấy người hay không, hệ thống đang ở trạng thái nào. Mô-đun `stream.py` phát một luồng hình để xem bằng trình duyệt trên laptop nối cùng mạng WiFi, tại địa chỉ `http://<IP của Pi>:8080`. Trên mỗi ảnh, mô-đun vẽ thêm một lớp đỏ nhạt phủ các khu cấm, vạch ranh giới và số thứ tự khu, khung người kèm độ tin cậy, và một dòng ở đáy ảnh ghi trạng thái xâm nhập, trạng thái quan sát cùng mã sự kiện đang mở. Khi chuyển hệ thống sang phòng khác, nhóm xem luồng hình để đặt lại các mốc chia khu trong `config/zones.yaml`.
+
+Luồng hình dùng định dạng MJPEG: máy chủ gửi liên tiếp các ảnh JPEG trong cùng một phản hồi HTTP (kiểu nội dung `multipart/x-mixed-replace`), trình duyệt nhận được ảnh nào thì hiện ảnh đó. Máy chủ viết bằng mô-đun `http.server` có sẵn trong Python, không phải cài thêm thư viện.
+
+Yêu cầu quan trọng nhất là luồng hình không được làm chậm việc phát hiện. Vì vậy vòng lặp chính chỉ làm một việc: sau khi cập nhật trạng thái, gọi `publish()` để cất ảnh mới nhất cùng danh sách người và dòng trạng thái, rồi báo cho các luồng đang chờ. Việc vẽ và nén JPEG (chất lượng 70) chạy ở luồng riêng của từng trình duyệt đang xem; khi không ai xem thì không có luồng nào vẽ. Ảnh được đưa sang sau khi trạng thái đã cập nhật, nên chữ trên hình khớp với log của chương trình. Khi camera bị che, vòng lặp không chạy YOLO, nên ảnh trên luồng hình không có khung người. Lỗi ở phía luồng hình không làm dừng chương trình chính: cổng 8080 đang bận thì chương trình chạy tiếp mà không có luồng hình, laptop đóng trang thì chỉ lượt xem đó kết thúc. Luồng hình được bật, tắt và chọn cổng trong `config/stream.yaml`. Ảnh hưởng của luồng hình tới tốc độ được đo ở mục 3.2.3.
+
+Luồng hình có hai giới hạn. Thứ nhất, luồng hình không yêu cầu mật khẩu, nên mọi máy trong cùng mạng WiFi đều xem được; vì vậy luồng hình chỉ dùng trong mạng nội bộ khi trình diễn và lắp đặt, và được tắt trong cấu hình khi không cần xem. Thứ hai, dòng trạng thái viết không dấu, vì hàm vẽ chữ của OpenCV chỉ vẽ được ký tự ASCII.
 
 ## 2.4 Dữ liệu và quy trình tinh chỉnh mô hình
 
