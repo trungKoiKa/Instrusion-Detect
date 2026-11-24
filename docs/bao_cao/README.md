@@ -2,10 +2,12 @@
 
 Bản nháp từng chương viết bằng Markdown, xuất ra Word để nhóm sửa tiếp. Mục lục và người viết từng mục: `../muc_luc_bao_cao.md`.
 
+- `viet_tat.md`: Danh mục ký hiệu và chữ viết tắt (phần đầu, trước Lời mở đầu).
 - `mo_dau.md`: Lời mở đầu.
 - `chuong_1.md`: chương 1, tổng quan và cơ sở lý thuyết.
 - `chuong_2.md`: chương 2, thiết kế hệ thống.
 - `chuong_3.md`: chương 3, triển khai và đánh giá. Mục nào chưa có số liệu thì để trống, ghi rõ còn thiếu gì.
+- `ket_luan.md`: Kết luận chung (sau chương 3).
 - `dao_duc.md`: Trách nhiệm đạo đức nghề nghiệp (đặt sau Kết luận, trước Tài liệu tham khảo).
 - `tai_lieu_tham_khao.md`: 5 tài liệu tham khảo của đề cương và các chỗ đã trích.
 - `word/`: file .docx xuất từ các file trên. **Khi đã sửa trên Word thì file Word là bản chính**, không xuất đè lên nữa.
