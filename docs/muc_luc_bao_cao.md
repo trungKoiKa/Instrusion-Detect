@@ -83,7 +83,7 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 | Mục | Người viết | Bằng chứng |
 | --- | --- | --- |
 | 3.1 Mô hình thực nghiệm: bố trí hiện trường, vạch khu, phần cứng, phần mềm | A + T | Cấu hình trong `config/`. **Thiếu:** ảnh hiện trường, ảnh bo ESP32 |
-| 3.2 Triển khai trên Raspberry Pi: chương trình chính, đo hiệu năng (FPS, CPU, RAM, nhiệt độ, hạ xung) | A | `logs/bench_20261031_235817.csv` (42 phút, YOLO riêng, OpenCV 5.0) và biểu đồ PNG; nhiệt độ lúc chạy nền 6,4 giờ |
+| 3.2 Triển khai trên Raspberry Pi: chương trình chính, đo hiệu năng (FPS, CPU, RAM, nhiệt độ, hạ xung) | A | `logs/bench_20261031_235817.csv` (45 phút, YOLO riêng, OpenCV 5.0) và biểu đồ PNG; nhiệt độ lúc chạy nền 6,4 giờ |
 | 3.3 Huấn luyện và đánh giá mô hình: tập dữ liệu, kết quả 3 seed, so sánh gốc và fine-tune trên test, ảnh so sánh, phân tích lỗi | A | Kết quả trên val (18/11) trong `tom_tat_trao_doi.md`. **Thiếu:** phiên s07, kết quả trên test, notebook trong `ml/notebooks/` |
 | 3.4 Triển khai broker và trạm cảnh báo ESP32, bản tin MQTT thực tế | T | `deploy/mosquitto/`, `esp32/src/main.cpp`, `docs/mqtt.md`. **Thiếu:** ảnh chụp log MQTTX hoặc `mosquitto_sub` |
 | 3.5.1 Phát hiện ở mức sự kiện và chọn tham số T, K_min, p trên val | A | **Thiếu:** tham số đang để tạm (T = 2 s, K_min = 5, p = 0,5), chưa chọn trên val |
@@ -97,7 +97,7 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 
 - **Kết luận** (A + T): một đoạn, không thêm thông tin mới.
 - **Trách nhiệm đạo đức nghề nghiệp** (A + T): quyền riêng tư dữ liệu hình ảnh, giấy đồng ý của người được chụp, làm mờ mặt, Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP (đối chiếu bản gốc trước khi trích), báo động giả và bỏ sót, an toàn điện.
-- **Tài liệu tham khảo**: 5 tài liệu trong đề cương, cộng tài liệu gốc của YOLO, MQTT, NCNN.
+- **Tài liệu tham khảo**: chỉ 5 tài liệu trong đề cương, ký hiệu [1]–[5]. Phần YOLO, MQTT, NCNN vẫn viết đầy đủ nhưng không trích (`bao_cao/tai_lieu_tham_khao.md`).
 - **Phụ lục** (nếu cần): bản tin MQTT đầy đủ, file cấu hình.
 
 ## Giới hạn phải ghi trong báo cáo
@@ -107,5 +107,6 @@ Cột "Bằng chứng" cho biết đã có gì trong repo (24/11) và còn thi�
 - Mỗi kịch bản sự cố thử 1 lần (K7 2 lần), chưa có thống kê.
 - Chạy nền một buổi tối, ít người qua lại: 0 lần trong 6,4 giờ chỉ cho biết tỷ lệ báo giả thật không quá khoảng 0,47 lần/giờ (độ tin cậy 95%).
 - Dữ liệu chụp trong một phòng, hai vị trí camera; tập test chỉ có hai phiên.
+- Độ trễ đo 8 lượt, một người, một hướng đi, đo tới đèn (cận trên của còi): chưa chứng minh được 95% dưới 2 s.
 - Số đo hiệu năng ngày 31/10 chỉ chạy YOLO, chưa chạy đủ mọi thành phần, và dùng OpenCV 5.0 (bản hiện đã chặn).
 - Chưa có `safecam.service` (tự chạy khi cắm điện, watchdog), chưa có `stream.py`: không viết như đã làm.

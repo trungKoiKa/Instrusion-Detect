@@ -301,7 +301,7 @@ Riêng ngưỡng độ chi tiết chưa đủ để bảo vệ kết luận "v�
 
 Hai máy trạng thái còn liên hệ với nhau ở một điểm nữa. Khi một sự kiện xâm nhập được mở lúc trạng thái quan sát không phải "tốt", bản tin `event` mang cờ `after_blind: true`, nghĩa là "xâm nhập sau mất quan sát". Cờ này cho người trực biết người đó có thể đã vào khu cấm trong lúc camera bị che (kịch bản K4).
 
-So với bản đề xuất, nhóm chưa làm phần phát hiện camera bị che ngắn nhưng lặp lại nhiều lần trong 30 – 60 giây; trường hợp này (kịch bản K2) được ghi vào hướng phát triển. Phương pháp độ chi tiết cũng có giới hạn: vật che mỏng hoặc che một phần có thể không bị phát hiện, và người đứng sát camera có thể làm độ chi tiết xuống dưới ngưỡng.
+So với bản đề xuất, nhóm chưa làm phần phát hiện camera bị che ngắn nhưng lặp lại nhiều lần trong 30 – 60 giây; trường hợp này (kịch bản K3) được ghi vào hướng phát triển. Phương pháp độ chi tiết cũng có giới hạn: vật che mỏng hoặc che một phần có thể không bị phát hiện, và người đứng sát camera có thể làm độ chi tiết xuống dưới ngưỡng.
 
 ### 2.5.4 Quy tắc xác nhận và bảng ưu tiên đèn, còi
 
