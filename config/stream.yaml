@@ -1,0 +1,4 @@
+# Luồng hình MJPEG xem trên laptop khi demo (đề xuất mục 8). Chạy nền đo báo động giả thì đặt false
+enabled: true
+port: 8080 # trên laptop cùng WiFi mở http://192.168.2.104:8080
+jpeg_quality: 70 # 0-100: cao thì nét hơn nhưng ảnh nặng hơn
