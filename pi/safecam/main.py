@@ -17,6 +17,7 @@ from .stream import StreamServer
 
 ROOT = Path(__file__).resolve().parents[2]  # gốc repo
 STATE_PATH = ROOT / "data" / "state.json"    # data/ không lên git
+FPS_EVERY_S = 30  # mỗi 30 giây in FPS một lần (đo tốc độ, xem Pi có chậm đi không)
 
 def status_line(intr, obs):
     """Dòng chữ vẽ ở đáy luồng hình. Không dấu vì cv2.putText chỉ vẽ được ASCII."""
@@ -79,7 +80,9 @@ def main():
     last_seq = 0
     last_hb = 0.0  # lượt đầu tiên gửi hb ngay
     hb_interval = mqtt_cfg["hb_interval_s"]
-
+    n_frames = 0                  # số ảnh xử lý được từ lần in FPS trước
+    fps_t0 = time.monotonic()
+    
     try:
         while True:
             frame = camera.get_latest(last_seq)  # chờ tối đa 2 giây
@@ -94,6 +97,7 @@ def main():
             dets = []    # ảnh bị che thì không chạy YOLO, stream vẽ không có khung
             if frame is not None:
                 last_seq, img = frame
+                n_frames += 1
                 # Ảnh bị che không vào cửa sổ khu, giống mất hình: không bao giờ coi là "vắng" (K1)
                 if image_detail(img) >= obs_cfg["detail_min"]:
                     dets = detector.detect(img)
@@ -144,6 +148,10 @@ def main():
             # publish chỉ cất ảnh, vẽ và mã hóa chạy ở luồng của stream
             if stream and img is not None:
                 stream.publish(img, dets, status_line(intr, obs))
+            if mono - fps_t0 >= FPS_EVERY_S:
+                print(f"FPS: {n_frames / (mono - fps_t0):.2f}")
+                n_frames = 0
+                fps_t0 = mono
 
     except KeyboardInterrupt:
         print("Đang tắt...")
