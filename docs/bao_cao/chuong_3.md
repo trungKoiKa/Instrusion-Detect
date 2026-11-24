@@ -152,7 +152,7 @@ Bảng 3.6: Kết quả chạy liên tục 6,4 giờ
 
 Sự kiện I22 xảy ra 3 giây sau khi chương trình khởi động, vì lúc đó có người đang ở trong khu 3. Sự kiện I23 xảy ra khi một thành viên nhóm đi vào khu 3. Cả hai được người trực xác nhận trong vòng 10 giây. Ba lần nghi ngờ cho thấy cửa sổ 2 giây đã làm đúng việc của nó: có những lần YOLO thấy người trong vài ảnh nhưng không đủ K_min ảnh, nên không gây báo động.
 
-Kết quả 0 báo động giả trong 6,4 giờ không có nghĩa là tỷ lệ báo giả bằng 0. Theo quy tắc "ba chia n" dùng cho trường hợp không quan sát thấy sự kiện nào [TL:ba-chia-n], với độ tin cậy 95%, tỷ lệ báo giả thật không quá khoảng 3 / 6,4 ≈ 0,47 lần mỗi giờ. Phép thử cũng chỉ diễn ra một buổi tối, trong một phòng, ít người qua lại, và nguyên nhân từng sự kiện dựa vào lời người trực vì hệ thống chưa lưu ảnh bằng chứng.
+Kết quả 0 báo động giả trong 6,4 giờ không có nghĩa là tỷ lệ báo giả bằng 0. Theo quy tắc "ba chia n" dùng cho trường hợp không quan sát thấy sự kiện nào, với độ tin cậy 95%, tỷ lệ báo giả thật không quá khoảng 3 / 6,4 ≈ 0,47 lần mỗi giờ. Phép thử cũng chỉ diễn ra một buổi tối, trong một phòng, ít người qua lại, và nguyên nhân từng sự kiện dựa vào lời người trực vì hệ thống chưa lưu ảnh bằng chứng.
 
 Trong một lần thử khác ngày 23/11, nhóm ghi nhận một lần báo động khi người đã rời khu, có thể do người đứng sát vạch giữa khu 1 và khu 2 hoặc do mô hình nhận nhầm vật [cần bổ sung: nếu lặp lại thì ghi nguyên nhân đã xác định].
 

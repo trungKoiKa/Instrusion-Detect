@@ -1,17 +1,23 @@
-# Tài liệu tham khảo (dự kiến)
+# Tài liệu tham khảo
 
-Khóa `[TL:...]` dùng trong bản nháp. Khi chốt thì đánh số theo thứ tự xuất hiện lần đầu trong quyển và đổi khóa thành `[n]`. Trước khi đưa vào quyển, mở từng đường dẫn để kiểm tra còn truy cập được và ghi ngày truy cập.
+Đúng 5 tài liệu trong đề cương đã nộp khoa, giữ nguyên số thứ tự. Quyển báo cáo chỉ trích các tài liệu này, ký hiệu `[1]` đến `[5]`, ở mức vừa đủ. Các phần không có trong 5 tài liệu (YOLO, chuẩn MQTT chi tiết, NCNN, COCO) vẫn viết đầy đủ nhưng không trích.
 
-| Khóa | Tài liệu |
-| --- | --- |
-| `mqtt311` | OASIS, *MQTT Version 3.1.1*, OASIS Standard, 2014. http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/mqtt-v3.1.1.html |
-| `ultralytics` | Ultralytics, *YOLO11 – Ultralytics YOLO Docs*. https://docs.ultralytics.com/models/yolo11/ |
-| `ultralytics-ncnn` | Ultralytics, *NCNN Export for YOLO Models*. https://docs.ultralytics.com/integrations/ncnn/ |
-| `ncnn` | Tencent, *ncnn: high-performance neural network inference framework optimized for the mobile platform*. https://github.com/Tencent/ncnn |
-| `mosquitto` | R. A. Light, "Mosquitto: server and client implementation of the MQTT protocol," *Journal of Open Source Software*, vol. 2, no. 13, p. 265, 2017. |
-| `paho` | Eclipse Foundation, *Eclipse Paho MQTT Python Client*. https://github.com/eclipse-paho/paho.mqtt.python |
-| `pubsubclient` | N. O'Leary, *PubSubClient: A client library for the Arduino Ethernet Shield that provides support for MQTT*. https://github.com/knolleary/pubsubclient |
-| `arduinojson` | B. Blanchon, *ArduinoJson*. https://arduinojson.org |
-| `ba-chia-n` | J. A. Hanley and A. Lippman-Hand, "If nothing goes wrong, is everything all right? Interpreting zero numerators," *JAMA*, vol. 249, no. 13, pp. 1743–1745, 1983. |
+[1] Vũ Hữu Tiến, Hoàng Thị Thu, *Bài giảng Phát triển ứng dụng Internet of Things*, Học viện Công nghệ Bưu chính Viễn thông, 2022.
 
-[cần bổ sung: 5 tài liệu tham khảo trong đề cương; tài liệu cho chương 1 (học sâu, CNN, YOLO gốc của Redmon và cộng sự, COCO, IoT, xử lý tại biên); Luật 91/2025/QH15 và Nghị định 356/2025/NĐ-CP cho phần đạo đức nghề nghiệp]
+[2] Gareth Halfacree, *The Official Raspberry Pi Beginner's Guide*, 4th ed., Raspberry Pi Press, 2020.
+
+[3] Vũ Hữu Tiệp, *Machine Learning cơ bản*, 2018.
+
+[4] Agus Kurniawan, *Internet of Things Projects with ESP32*, Packt Publishing, 2019.
+
+[5] Ian Goodfellow, Yoshua Bengio, Aaron Courville, *Deep Learning*, MIT Press, 2016.
+
+## Các chỗ trích trong chương 1 và mức đã đối chiếu
+
+| Tài liệu | Mục trích | Nội dung | Đã đối chiếu |
+| --- | --- | --- | --- |
+| [1] | 1.2.1, 1.2.2, 1.3.1 | Khái niệm IoT; xử lý tại biên; MQTT là giao thức phổ biến trong IoT | **Chưa**: không có bản bài giảng, cần mở bài giảng kiểm tra |
+| [2] | 1.6.1 (2 chỗ) | Giới thiệu Raspberry Pi; thông số Raspberry Pi 4 | **Chưa**: không tải được sách, cần kiểm tra chương 1 của sách |
+| [3] | 1.4.1 (3 chỗ) | Phân nhóm thuật toán học máy; quá khớp; MLP và lan truyền ngược | Đã đối chiếu mục lục và tiêu đề mục trong mã nguồn sách |
+| [4] | 1.6.2 (2 chỗ) | Giới thiệu ESP32; lập trình bằng ESP-IDF hoặc Arduino | **Chưa**: không tải được trang sách, cần kiểm tra chương 1 của sách |
+| [5] | 1.4.1 – 1.4.4 (9 chỗ) | Định nghĩa học máy (5.1); quá khớp, tập kiểm định (5.2, 5.3); học sâu (chương 1); CNN, gộp (9.2, 9.3); precision, recall (11.1); học chuyển giao (15.2); tăng cường dữ liệu (7.4) | Đã đối chiếu mục lục sách |

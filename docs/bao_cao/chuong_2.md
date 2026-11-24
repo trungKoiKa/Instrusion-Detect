@@ -102,9 +102,9 @@ Bảng 2.4: Lựa chọn công nghệ và phương án thay thế
 | Thiết bị xử lý | Raspberry Pi 4 | Jetson Nano, máy tính mini | Nhóm có sẵn, cộng đồng lớn, đủ chạy mô hình nhỏ ở vài ảnh/giây; Jetson mạnh hơn nhưng đắt và khó mua |
 | Camera | Logitech C270 (USB) | Raspberry Pi Camera Module, camera IP | Có sẵn, cắm USB dùng ngay, dùng chung được trên laptop khi phát triển và thu dữ liệu |
 | Mô hình | YOLO11n | YOLOv8n, YOLO26n | Bản nhỏ nhất của YOLO11, cân bằng tốc độ và độ chính xác; YOLO26n mới hơn nhưng nhóm đã đo YOLO11n trên Pi, đổi lúc này phải xuất và đo lại |
-| Định dạng chạy | NCNN | PyTorch, ONNX Runtime, TFLite | NCNN được viết cho CPU ARM của thiết bị di động [TL:ncnn]; Ultralytics xuất trực tiếp được [TL:ultralytics-ncnn] |
+| Định dạng chạy | NCNN | PyTorch, ONNX Runtime, TFLite | NCNN được viết cho CPU ARM của thiết bị di động; Ultralytics xuất trực tiếp được |
 | Kích thước ảnh vào | 320 px | 640 px, 416 px | 320 px đủ nhanh để đạt yêu cầu PCN5; ảnh lớn hơn chính xác hơn với người ở xa nhưng chậm hơn nhiều |
-| Giao thức | MQTT | HTTP, CoAP, WebSocket | Nhẹ, có QoS, retain, LWT sẵn trong giao thức, có thư viện cho cả Python và ESP32 [TL:mqtt311] |
+| Giao thức | MQTT | HTTP, CoAP, WebSocket | Nhẹ, có QoS, retain, LWT sẵn trong giao thức, có thư viện cho cả Python và ESP32 |
 | Broker | Mosquitto trên Pi | Broker công cộng (HiveMQ, EMQX Cloud) | Không cần Internet, không đưa dữ liệu ra ngoài |
 | Trạm cảnh báo | ESP32 | Arduino Uno kèm module WiFi | Có WiFi tích hợp, đủ chân cho 3 đèn, còi và 4 nút |
 
@@ -131,7 +131,7 @@ Cùng một mô-đun camera được dùng cho cả chương trình chính lẫn
 
 ### 2.3.2 Mô-đun phát hiện YOLO11n NCNN 320 px
 
-Mô-đun `detector.py` nạp mô hình YOLO11n đã xuất sang định dạng NCNN bằng thư viện Ultralytics [TL:ultralytics]. Mỗi lần gọi, mô-đun đưa ảnh 640×480 vào hàm `predict` với các tham số:
+Mô-đun `detector.py` nạp mô hình YOLO11n đã xuất sang định dạng NCNN bằng thư viện Ultralytics. Mỗi lần gọi, mô-đun đưa ảnh 640×480 vào hàm `predict` với các tham số:
 
 - `imgsz=320`: Ultralytics tự thu ảnh về cạnh 320 điểm ảnh trước khi đưa vào mạng.
 - `classes=[0]`: chỉ giữ lớp người (lớp số 0 trong bộ COCO).
@@ -350,7 +350,7 @@ Hai chi tiết giúp hạn chế ghi thẻ nhớ và giữ đúng thứ tự:
 
 ### 2.6.1 Broker Mosquitto cục bộ, tài khoản và ACL
 
-Broker Mosquitto [TL:mosquitto] cài trực tiếp trên Raspberry Pi, nghe ở cổng 1883 trên mọi giao diện mạng để ESP32 và laptop kết nối được. Nhóm đặt cấu hình trong file `deploy/mosquitto/safecam.conf` với ba điểm chính: tắt kết nối ẩn danh (`allow_anonymous false`), dùng file mật khẩu tạo bằng `mosquitto_passwd`, và dùng file phân quyền ACL. Chế độ `persistence` đã bật sẵn trong cấu hình mặc định của Mosquitto, giúp broker giữ các bản tin retain qua lần khởi động lại.
+Broker Mosquitto cài trực tiếp trên Raspberry Pi, nghe ở cổng 1883 trên mọi giao diện mạng để ESP32 và laptop kết nối được. Nhóm đặt cấu hình trong file `deploy/mosquitto/safecam.conf` với ba điểm chính: tắt kết nối ẩn danh (`allow_anonymous false`), dùng file mật khẩu tạo bằng `mosquitto_passwd`, và dùng file phân quyền ACL. Chế độ `persistence` đã bật sẵn trong cấu hình mặc định của Mosquitto, giúp broker giữ các bản tin retain qua lần khởi động lại.
 
 Mỗi thiết bị có một tài khoản riêng và chỉ được đọc, ghi các topic của mình (Bảng 2.11). Nhờ vậy ESP32 không thể giả bản tin trạng thái của Pi, và Pi không thể giả ACK của người trực.
 
@@ -415,15 +415,15 @@ Mã sự kiện dùng chữ cái đầu để phân biệt loại (`I` xâm nh�
 
 ### 2.6.4 Cơ chế ACK gửi lặp, heartbeat và LWT
 
-Thư viện PubSubClient trên ESP32 chỉ gửi được bản tin QoS 0, tức không có xác nhận từ broker [TL:pubsubclient]. Một bản tin ACK có thể bị mất trên đường đi mà ESP32 không biết. Nhóm bù lại ở tầng ứng dụng: ESP32 gửi lại ACK mỗi giây, cho tới khi thấy mã của mình xuất hiện trong trường `acked` của bản tin `state` từ Pi. Pi nhận cùng một ACK nhiều lần cũng không sao, vì xác nhận một sự kiện đã xác nhận không làm thay đổi gì. Mỗi lần nhận ACK, Pi luôn gửi lại `state`, kể cả khi trạng thái không đổi, để ESP32 có cơ hội thấy trường `acked`.
+Thư viện PubSubClient trên ESP32 chỉ gửi được bản tin QoS 0, tức không có xác nhận từ broker. Một bản tin ACK có thể bị mất trên đường đi mà ESP32 không biết. Nhóm bù lại ở tầng ứng dụng: ESP32 gửi lại ACK mỗi giây, cho tới khi thấy mã của mình xuất hiện trong trường `acked` của bản tin `state` từ Pi. Pi nhận cùng một ACK nhiều lần cũng không sao, vì xác nhận một sự kiện đã xác nhận không làm thay đổi gì. Mỗi lần nhận ACK, Pi luôn gửi lại `state`, kể cả khi trạng thái không đổi, để ESP32 có cơ hội thấy trường `acked`.
 
 Heartbeat được gửi mỗi 2 giây từ vòng lặp chính. ESP32 chỉ dùng `hb` để biết Pi còn sống, không dùng `state`, vì `state` có retain: broker có thể gửi lại bản `state` cũ dù Pi đã dừng từ lâu. ESP32 chưa nhận được nhịp `hb` nào kể từ khi khởi động cũng coi là mất tín hiệu từ Pi.
 
-Cả Pi và ESP32 đều đăng ký "di chúc" (Last Will and Testament, LWT) khi kết nối: nếu thiết bị rớt mạng đột ngột, broker tự gửi `offline` lên topic `status` của thiết bị đó [TL:mqtt311]. Thời gian keep-alive đặt là 10 giây, nên broker phát hiện thiết bị mất kết nối sau khoảng 15 giây (1,5 lần keep-alive). Khi Pi dừng chương trình một cách bình thường, broker không gửi di chúc, nên Pi tự gửi `offline` trước khi ngắt kết nối.
+Cả Pi và ESP32 đều đăng ký "di chúc" (Last Will and Testament, LWT) khi kết nối: nếu thiết bị rớt mạng đột ngột, broker tự gửi `offline` lên topic `status` của thiết bị đó. Thời gian keep-alive đặt là 10 giây, nên broker phát hiện thiết bị mất kết nối sau khoảng 15 giây (1,5 lần keep-alive). Khi Pi dừng chương trình một cách bình thường, broker không gửi di chúc, nên Pi tự gửi `offline` trước khi ngắt kết nối.
 
 ### 2.6.5 Xử lý mất kết nối và kết nối lại
 
-Phía Pi dùng thư viện paho-mqtt [TL:paho] với chế độ kết nối nền (`connect_async` và `loop_start`). Nếu broker chưa chạy hoặc mạng chưa sẵn sàng, chương trình vẫn chạy bình thường và thư viện tự thử kết nối lại sau 1 đến 10 giây. Mỗi lần kết nối lại, Pi đăng ký lại topic ACK và gửi lại bản `state` cuối cùng, phòng trường hợp broker đã mất bản retain. Bản tin ACK được nhận trên luồng của thư viện paho, nên Pi chỉ đưa ACK vào một hàng đợi (`queue.Queue`); vòng lặp chính lấy ra và xử lý. Như vậy chỉ một luồng được phép thay đổi trạng thái, tránh lỗi tranh chấp dữ liệu giữa hai luồng.
+Phía Pi dùng thư viện paho-mqtt với chế độ kết nối nền (`connect_async` và `loop_start`). Nếu broker chưa chạy hoặc mạng chưa sẵn sàng, chương trình vẫn chạy bình thường và thư viện tự thử kết nối lại sau 1 đến 10 giây. Mỗi lần kết nối lại, Pi đăng ký lại topic ACK và gửi lại bản `state` cuối cùng, phòng trường hợp broker đã mất bản retain. Bản tin ACK được nhận trên luồng của thư viện paho, nên Pi chỉ đưa ACK vào một hàng đợi (`queue.Queue`); vòng lặp chính lấy ra và xử lý. Như vậy chỉ một luồng được phép thay đổi trạng thái, tránh lỗi tranh chấp dữ liệu giữa hai luồng.
 
 Phía ESP32 bật chế độ tự kết nối lại WiFi và thử kết nối lại broker mỗi 5 giây. Trong lúc mất kết nối, ESP32 giữ nguyên báo động đang có. Người trực vẫn bấm nút được: còi tắt ngay tại chỗ, các mã đang chờ được ghi nhớ, và khi có mạng lại thì ESP32 gửi ACK như bình thường (kịch bản K5). Khi có sự kiện mới chưa được bấm nút, ESP32 bỏ trạng thái tắt còi tại chỗ để còi kêu lại.
 
@@ -470,7 +470,7 @@ Theo tên đường mạch trên bo, bốn nút được dự kiến cho bốn v
 
 ### 2.7.3 Lưu đồ firmware
 
-Firmware viết bằng Arduino framework trên PlatformIO, dùng hai thư viện PubSubClient (MQTT) và ArduinoJson (đọc, ghi JSON) [TL:arduinojson]. Nguyên tắc chính là **không dùng hàm chờ `delay`** trong vòng lặp. Mọi việc định thời (nháy đèn, bíp còi, gửi lặp ACK, chống dội nút) đều so sánh với `millis()`, nên nút bấm luôn được đọc kịp thời và đèn nháy đều. Hình 2.8 là lưu đồ của vòng lặp chính.
+Firmware viết bằng Arduino framework trên PlatformIO, dùng hai thư viện PubSubClient (MQTT) và ArduinoJson (đọc, ghi JSON). Nguyên tắc chính là **không dùng hàm chờ `delay`** trong vòng lặp. Mọi việc định thời (nháy đèn, bíp còi, gửi lặp ACK, chống dội nút) đều so sánh với `millis()`, nên nút bấm luôn được đọc kịp thời và đèn nháy đều. Hình 2.8 là lưu đồ của vòng lặp chính.
 
 ![Hình 2.8: Lưu đồ vòng lặp firmware ESP32](hinh/h2_8_luu_do_firmware.png)
 
