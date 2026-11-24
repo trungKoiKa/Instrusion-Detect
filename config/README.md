@@ -7,3 +7,4 @@ Cấu hình của chương trình chính (mục 3 của đề xuất). `tools/ca
 - `detection.yaml`: ngưỡng tin cậy, T, K_min, p, n_min.
 - `mqtt.yaml`: địa chỉ broker, tên topic, tài khoản (mật khẩu để trong `.env`, không commit).
 - `observation.yaml`: ngưỡng độ chi tiết ảnh coi là bị che, thời gian lỗi trước khi cảnh báo quan sát.
+- `stream.yaml`: bật/tắt luồng hình xem trên laptop, cổng, chất lượng JPEG.
