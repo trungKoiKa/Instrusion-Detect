@@ -245,9 +245,11 @@ Giới hạn của phép thử: mỗi kịch bản chỉ thử một lần nên 
 
 ## 3.6 Đánh giá chung
 
-[cần bổ sung sau khi có đủ số liệu 3.3, 3.5.1. Dự kiến gồm: bảng đối chiếu từng yêu cầu ở Bảng 2.2 với kết quả đo và mức đạt; hạn chế của hệ thống; hướng phát triển]
+Mục này đối chiếu kết quả đo ở các mục 3.2 đến 3.5 với các yêu cầu phi chức năng đặt ra ở Bảng 2.2, sau đó nêu các hạn chế của hệ thống và hướng phát triển.
 
-Bảng 3.11: Đối chiếu yêu cầu và kết quả (bản nháp)
+### 3.6.1 Đối chiếu với các yêu cầu
+
+Bảng 3.11: Đối chiếu yêu cầu và kết quả
 
 | Mã | Chỉ tiêu | Kết quả | Đạt |
 | --- | --- | --- | --- |
@@ -259,6 +261,35 @@ Bảng 3.11: Đối chiếu yêu cầu và kết quả (bản nháp)
 | PCN6 | Hoạt động khi không có Internet | [cần bổ sung: thử rút WAN] | [cần bổ sung] |
 | PCN7 | Tài khoản và phân quyền broker | [cần bổ sung: kết quả thử quyền] | [cần bổ sung] |
 | PCN8 | Mất điện không hỏng file trạng thái | K13 đạt, kiểm thử tự động đạt | Đạt |
+
+Các yêu cầu về độ tin cậy khi có sự cố (PCN4, PCN8) và về tài nguyên của Raspberry Pi (PCN5) đã đạt. Với PCN5, tốc độ 7,47 ảnh/giây gần gấp đôi mức tối thiểu 4 ảnh/giây, và nhiệt độ không vượt 51,1 °C khi có tản nhiệt và quạt. Yêu cầu PCN3 chỉ đòi hỏi đo được số báo động giả mỗi giờ; phép đo cho kết quả 0 lần trong 6,4 giờ, nhưng chỉ đủ kết luận tỷ lệ không quá khoảng 0,47 lần/giờ. Với PCN1, độ trễ trung bình 1,31 giây thấp hơn mức 2 giây, nhưng 8 lượt đo chưa đủ để khẳng định 95% số lần dưới 2 giây, và có một lượt 2,30 giây. Độ trễ này chủ yếu do luật cửa sổ T giây quyết định, nên có thể điều chỉnh qua T và p, đổi lại hệ thống dễ báo giả hơn.
+
+[cần bổ sung: nhận xét PCN2 sau khi có kết quả trên tập test (mục 3.3.3); PCN6, PCN7 sau khi thử rút dây WAN và thử phân quyền broker]
+
+### 3.6.2 Hạn chế
+
+Các hạn chế của hệ thống:
+
+- **Khu cấm theo hướng nhìn.** Mỗi khu là một dải dọc của khung hình, ứng với một hướng nhìn từ camera chứ không phải một vùng trên sàn (mục 2.3.3). Hệ thống chỉ phù hợp khi khu cấm nằm về một phía của căn phòng theo hướng nhìn của camera. Người đứng sát ranh giới hai khu có thể bị xếp sang khu bên cạnh, vì tay chân vung ra làm lệch tâm khung người.
+- **Mô hình và dữ liệu.** Dữ liệu tinh chỉnh được chụp trong một phòng, ở hai vị trí đặt camera, trong hai ngày; tập test chỉ có hai phiên. Hệ thống không được thiết kế cho điều kiện thiếu sáng. Mọi thử nghiệm trên phần cứng ở mục 3.5 dùng mô hình gốc, chưa dùng mô hình tinh chỉnh.
+- **Tham số cửa sổ.** Các thử nghiệm dùng tham số tạm T = 2 s, K_min = 5, p = 0,5, n_min = 8, conf = 0,25 [cần bổ sung: cập nhật sau mục 3.5.1]. Bộ tham số này quyết định cả số báo động giả lẫn độ trễ cảnh báo, nên cần chọn lại theo từng nơi lắp đặt.
+- **Giám sát camera.** Phương pháp dựa trên độ chi tiết ảnh không phát hiện được vật che mỏng hoặc che một phần, và có thể coi người đứng sát camera là camera bị che. Hệ thống chưa phát hiện được camera bị che ngắn nhưng lặp lại nhiều lần, camera bị mờ hay bị xoay hướng. Người đã ở trong khu cấm từ lúc chương trình khởi động được báo kèm nhãn "xâm nhập sau mất quan sát".
+- **Vận hành.** Chương trình chưa được cài thành dịch vụ tự chạy khi Raspberry Pi khởi động và chưa có watchdog tự khởi động lại khi chương trình treo; sau mỗi lần Pi khởi động lại phải chạy tay. Raspberry Pi 4 không có đồng hồ thời gian thực, nên nếu khởi động lúc router không có Internet thì giờ trong log và bản tin có thể sai cho tới khi đồng bộ được. Hệ thống chưa lưu ảnh bằng chứng khi có cảnh báo. Khi Pi tắt hẳn mà WiFi vẫn còn, đèn của trạm ESP32 ngừng nháy vài giây mỗi lần thử kết nối lại broker (mục 2.6.5).
+- **Bảo mật.** Broker yêu cầu tài khoản và phân quyền theo topic, nhưng kết nối MQTT chưa mã hóa bằng TLS, nên mật khẩu và bản tin đi dưới dạng rõ trong mạng nội bộ. Hệ thống dựa vào việc mạng WiFi nội bộ được bảo vệ bằng mật khẩu riêng.
+
+Các hạn chế của phép đánh giá:
+
+- Mỗi kịch bản sự cố chỉ thử một lần (K7 hai lần), chưa có số liệu thống kê.
+- Chạy liên tục 6,4 giờ trong một buổi tối, ít người qua lại.
+- Độ trễ đo 8 lượt, một người, một hướng đi, đo tới lúc đèn sáng thay cho lúc còi kêu.
+- Hiệu năng được đo khi chỉ chạy YOLO, với OpenCV 5.0, chưa đo khi chạy đủ mọi thành phần.
+
+### 3.6.3 Hướng phát triển
+
+- **Hoàn thiện đánh giá.** Thử thêm các kịch bản sự cố chưa làm: K2 (đã xác nhận, người còn trong khu, che camera vài phút rồi bỏ che), K3 (che camera ngắn lặp lại trong lúc người đi vào), K6 (mất kết nối, bấm nút, trong lúc đó có sự kiện mới), K8 (khởi động lại Pi rồi che camera ngay), K9 (khởi động lại khi không có Internet), K11 (vòng lặp YOLO treo trong khi MQTT vẫn chạy). Chạy liên tục 24 giờ ở nhiều thời điểm trong ngày; đo độ trễ nhiều lượt hơn, nhiều hướng đi, đo tới lúc còi kêu.
+- **Mô hình.** Thu thêm dữ liệu ở nhiều phòng, nhiều ngày; thử ảnh đầu vào 416 điểm ảnh cho người ở xa; thử khóa phần xương sống khi tinh chỉnh; thử các thế hệ YOLO mới hơn như YOLO26n.
+- **Chức năng.** Chế độ bật, tắt canh gác theo lịch, cần thêm mô-đun đồng hồ thời gian thực DS3231; phát hiện camera bị mờ hoặc bị xoay hướng; lưu ảnh bằng chứng và tự xóa sau một số ngày; gửi thông báo qua Telegram khi có Internet; giao cho ba nút còn lại của trạm ESP32 các chức năng riêng.
+- **Vận hành và bảo mật.** Cài chương trình thành dịch vụ systemd có watchdog; mã hóa kết nối MQTT bằng TLS; nếu lắp được camera nhìn chéo xuống sàn thì chuyển từ 4 khu dọc sang vùng đa giác trên sàn xét theo điểm chân của người, mà không phải đổi các phần khác của hệ thống.
 
 ## 3.7 Kết luận chương 3
 

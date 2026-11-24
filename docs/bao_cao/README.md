@@ -2,6 +2,7 @@
 
 Bản nháp từng chương viết bằng Markdown, xuất ra Word để nhóm sửa tiếp. Mục lục và người viết từng mục: `../muc_luc_bao_cao.md`.
 
+- `mo_dau.md`: Lời mở đầu.
 - `chuong_1.md`: chương 1, tổng quan và cơ sở lý thuyết.
 - `chuong_2.md`: chương 2, thiết kế hệ thống.
 - `chuong_3.md`: chương 3, triển khai và đánh giá. Mục nào chưa có số liệu thì để trống, ghi rõ còn thiếu gì.
