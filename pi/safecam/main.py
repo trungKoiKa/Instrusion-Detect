@@ -1,4 +1,5 @@
 """Vòng lặp chính: camera -> YOLO -> 4 khu -> trạng thái -> MQTT."""
+import signal
 import sys
 import time
 from pathlib import Path
@@ -12,6 +13,7 @@ from .outputs import (RecentAcks, build_state, intr_code, intrusion_event_msg, o
                       observation_event_msg, split_ack_ids)
 from .persistence import (intrusion_from_dict, intrusion_to_dict, load_state,
                           observation_from_dict, observation_to_dict, save_state)
+from .sdnotify import notify
 from .zones import EMPTY, UNKNOWN, ZoneMonitor
 from .stream import StreamServer
 
@@ -30,7 +32,13 @@ def status_line(intr, obs):
     return text
 
 
+def on_sigterm(signum, frame):
+    """systemctl stop gửi SIGTERM: đổi thành KeyboardInterrupt để tắt gọn như Ctrl+C."""
+    raise KeyboardInterrupt
+
+
 def main():
+    signal.signal(signal.SIGTERM, on_sigterm)
     cam_cfg = load_config("camera")
     det_cfg = load_config("detection")
     zone_cfg = load_config("zones")
@@ -76,6 +84,7 @@ def main():
 
     send_state()  # ESP32 có trạng thái ngay, kể cả sự kiện vừa khôi phục (K7)
     print("Sẵn sàng. Trạng thái xâm nhập:", intr.state)
+    notify("READY=1")  # báo systemd: khởi động xong (Type=notify)
 
     last_seq = 0
     last_hb = 0.0  # lượt đầu tiên gửi hb ngay
@@ -90,6 +99,7 @@ def main():
             wall = time.time()       # đồng hồ treo tường: cho giờ sự kiện
             if mono - last_hb >= hb_interval:  # gõ từ vòng lặp chính: vòng treo thì hb dừng
                 mqtt.publish_hb()
+                notify("WATCHDOG=1")  # cùng chỗ với hb: vòng treo thì cả hai dừng, systemd chạy lại
                 last_hb = mono
 
             seen = False # Lượt này có ảnh nhìn được không

@@ -1,6 +1,6 @@
 # pi – chương trình chạy trên Raspberry Pi
 
-Chạy: `python -m safecam.main` (từ thư mục `pi/`). Test: `pytest tests/` (chạy được trên laptop, không cần phần cứng).
+Trên Pi, bình thường chạy bằng dịch vụ systemd `safecam` (cài, xem log, tắt: `deploy/README.md`). Chạy tay `python -u -m safecam.main` (từ thư mục `pi/`) chỉ khi đo hoặc thử, và phải `sudo systemctl stop safecam` trước. Test: `python -m pytest pi/tests` từ gốc repo (chạy được trên laptop, không cần phần cứng).
 
 ## Cài trên Pi
 
@@ -28,4 +28,5 @@ Phải cài torch bản CPU trước: bản mặc định trên PyPI kéo theo v
 | `persistence.py` | Ghi file trạng thái mỗi lần đổi, khôi phục khi khởi động lại | 5 |
 | `mqtt_client.py` | Publish event/state/hb, nhận ACK | 6 |
 | `stream.py` | Luồng hình có vẽ khu và khung người, xem trên laptop khi demo | 8 |
-| `main.py` | Ghép các module, vòng suy luận | – |
+| `sdnotify.py` | Báo systemd `READY=1`, `WATCHDOG=1`; chạy tay thì không làm gì (Thăng) | 9 |
+| `main.py` | Ghép các module, vòng suy luận; `systemctl stop` (SIGTERM) tắt gọn như Ctrl+C | – |

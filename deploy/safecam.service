@@ -1,0 +1,22 @@
+# Dịch vụ systemd cho SafeCam: Pi cắm điện là main.py tự chạy, chết hoặc treo thì tự chạy lại.
+# Cài và dùng: xem deploy/README.md
+[Unit]
+Description=SafeCam: phát hiện người xâm nhập (ĐATN Nhóm 17)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=nhom17
+WorkingDirectory=/home/nhom17/Instrusion-Detect/pi
+ExecStart=/home/nhom17/Instrusion-Detect/.venv/bin/python -u -m safecam.main
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+WatchdogSec=15
+# Khởi động nguội (Pi vừa bật) đo được ~90 s do nạp thư viện từ thẻ nhớ; mặc định 90 s là quá sát
+TimeoutStartSec=180
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target
